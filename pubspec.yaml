@@ -26,11 +26,11 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
-  plugin:
-    platforms:
-      android:
-        package: vip.caidou.common
-        pluginClass: CommonPlugin
+#  plugin:
+#    platforms:
+#      android:
+#        package: vip.caidou.common
+#        pluginClass: CommonPlugin
 
   assets:
     - assets/
