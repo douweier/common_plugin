@@ -94,7 +94,7 @@ showAlert(
   String text, {
   ///窗体对齐
   AlignmentGeometry alignment = Alignment.bottomCenter,
-  Color fontColor = ColorTheme.white,
+  Color? fontColor,
 
   ///提醒样式类型
   AlertStyle alertStyle = AlertStyle.none,
@@ -201,7 +201,7 @@ showAlert(
               Expanded(
                 child: TextView(
                   text,
-                  color: fontColor,
+                  color: fontColor ?? ColorTheme.white,
                   maxLines: 10,
                   shadowShow: true,
                 ),

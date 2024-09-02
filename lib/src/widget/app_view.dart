@@ -6,15 +6,15 @@ import 'package:flutter/services.dart';
 
 class AppView extends StatelessWidget {
   final String? title;
-  final Color titleFontColor;
+  final Color? titleFontColor;
   final double titleFontSize;
   final Widget? titleWidget;
   final Widget? body;
   final double? elevation;
   final List<Color>? lineGradColor;
   final List<Widget>? actions;
-  final Color appBarBackColor;
-  final Color backgroundColor;
+  final Color? appBarBackColor;
+  final Color? backgroundColor;
   final EdgeInsets? padding;
   final Widget? bottomSheet;
   final bool showAppBarBackImage;
@@ -22,15 +22,15 @@ class AppView extends StatelessWidget {
   const AppView({
     Key? key,
     this.title,
-    this.titleFontColor = ColorTheme.font,
+    this.titleFontColor,
     this.titleFontSize = 16,
     this.titleWidget,
     this.body,
     this.padding,
     this.elevation = 1,
     this.lineGradColor,
-    this.appBarBackColor = ColorTheme.body,
-    this.backgroundColor = ColorTheme.background,
+    this.appBarBackColor,
+    this.backgroundColor,
     this.bottomSheet,
     this.actions,
     this.showAppBarBackImage = true,
@@ -48,9 +48,9 @@ class AppView extends StatelessWidget {
           ? AppBar(
               elevation: elevation,
               toolbarHeight: 50,
-              title: titleWidget ?? Text(title!,style: TextStyle(fontSize: titleFontSize,color: titleFontColor,),),
+              title: titleWidget ?? Text(title!,style: TextStyle(fontSize: titleFontSize,color: titleFontColor ?? ColorTheme.font,),),
               centerTitle: true,
-              backgroundColor: appBarBackColor,
+              backgroundColor: appBarBackColor ?? ColorTheme.body,
               shadowColor: ColorTheme.border.withOpacity(.6),
               systemOverlayStyle: SystemUiOverlayStyle.dark,
               flexibleSpace: showAppBarBackImage
@@ -67,7 +67,7 @@ class AppView extends StatelessWidget {
                   : null,
               leading: canPop
                   ? ButtonBack(
-                      color: titleFontColor,
+                      color: titleFontColor ?? ColorTheme.font,
                       shadowShow: false,
                       size: 22,
                     )
@@ -76,7 +76,7 @@ class AppView extends StatelessWidget {
             )
           : null,
       body: Container(padding: padding, child: body ?? Container()),
-      backgroundColor: backgroundColor,
+      backgroundColor: backgroundColor ?? ColorTheme.background,
       resizeToAvoidBottomInset: true,
     );
   }

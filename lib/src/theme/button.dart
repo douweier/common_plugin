@@ -173,13 +173,13 @@ class ButtonView extends StatelessWidget {
 class ButtonBack extends StatelessWidget {
   const ButtonBack(
       {Key? key,
-      this.color = ColorTheme.white,
+      this.color,
       this.onPressed,
       this.size = 24,
       this.shadowShow = true})
       : super(key: key);
 
-  final Color color;
+  final Color? color;
 
   final VoidCallback? onPressed;
   final double size;
@@ -191,7 +191,7 @@ class ButtonBack extends StatelessWidget {
       icon: IconText(
         Icons.arrow_back_ios,
         size: size,
-        color: color,
+        color: color ?? ColorTheme.white,
         shadowShow: shadowShow,
       ),
       onPressed: () {
@@ -208,7 +208,7 @@ class ButtonBack extends StatelessWidget {
 class ButtonIcon extends StatelessWidget {
   const ButtonIcon(this.icon,
       {Key? key,
-      this.color = ColorTheme.white,
+      this.color,
       this.backgroundColor,
       this.showBackgroundColor = true,
       this.onTap,
@@ -223,7 +223,7 @@ class ButtonIcon extends StatelessWidget {
       : super(key: key);
 
   final IconData icon;
-  final Color color;
+  final Color? color;
   final Color? backgroundColor;
   final EdgeInsetsGeometry iconPadding;
   final EdgeInsetsGeometry? iconMargin;
@@ -254,7 +254,7 @@ class ButtonIcon extends StatelessWidget {
             ),
             child: IconText(
               icon,
-              color: color,
+              color: color ?? ColorTheme.white,
               size: iconSize,
               shadowShow: shadowShow,
               shadowColor: shadowColor,

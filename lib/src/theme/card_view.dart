@@ -20,7 +20,7 @@ class CardView extends StatelessWidget {
     this.title,
     this.titleCenter = false,
     this.titleAlignment = Alignment.topLeft,
-    this.titleFontColor = ColorTheme.font,
+    this.titleFontColor = const Color(0xff333333),
     this.titleFontSize = 16.0,
   });
 

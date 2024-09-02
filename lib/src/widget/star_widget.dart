@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 class StarWidget extends StatefulWidget {
   StarWidget({
     this.backStar = const IconText(Icons.star_rate_sharp,color: Colors.black12,shadowShow: false,size: 24,),
-    this.selectStar = const IconText(Icons.star_rate_sharp,color: ColorTheme.yellow,shadowShow: false,size: 24,),
+    this.selectStar = const IconText(Icons.star_rate_sharp,color: Color(0xfffcd205),shadowShow: false,size: 24,),
     this.starCount = 5,
     this.value = 0.0,
     this.step = 0.5,
@@ -21,7 +21,7 @@ class StarWidget extends StatefulWidget {
     this.onChanged,
     this.afterSelectEndChange = true,
     this.showFormatMark = false,
-    this.markFontColor = ColorTheme.main,
+    this.markFontColor,
   });
 
   /// 未选中背景的星星.
@@ -65,7 +65,7 @@ class StarWidget extends StatefulWidget {
 
   ///是否显示格式化标签文字, readOnly 为true 供展示时，只显示高、中、低，可选的时候显示非常好、好、一般、差、非常差
   final bool showFormatMark;
-  final Color markFontColor;
+  final Color? markFontColor;
 
   @override
   _StarWidgetState createState() => _StarWidgetState();
@@ -160,7 +160,7 @@ class _StarWidgetState extends State<StarWidget> {
               if (widget.showFormatMark)
               Padding(
                 padding: const EdgeInsets.only(left: 5.0),
-                child: Text(widget.readOnly ? getScoreMarkFormat(_currentStars) : getScoreMark(_currentStars),style: TextStyle(color: widget.markFontColor),),
+                child: Text(widget.readOnly ? getScoreMarkFormat(_currentStars) : getScoreMark(_currentStars),style: TextStyle(color: widget.markFontColor ?? ColorTheme.main),),
               ),
             ],
           ),

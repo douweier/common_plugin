@@ -6,8 +6,8 @@ class DotFlashAnimation extends StatefulWidget {
   final Duration duration;
   final double width;
   final double height;
-  final Color color;
-  final Color color2;
+  final Color? color;
+  final Color? color2;
   final bool isChangeColor; //是否变色动画
 
   const DotFlashAnimation({
@@ -15,8 +15,8 @@ class DotFlashAnimation extends StatefulWidget {
     this.duration = const Duration(milliseconds: 1000),
     this.width = 8,
     this.height = 8,
-    this.color = ColorTheme.green,
-    this.color2 = ColorTheme.mainLight,
+    this.color,
+    this.color2,
     this.isChangeColor = true,
   }) : super(key: key);
 
@@ -54,8 +54,8 @@ class _DotFlashAnimationState extends State<DotFlashAnimation>
     _controller.forward();
 
     ColorTween _colorTween = ColorTween(
-      begin: widget.color,
-      end: widget.color2, // 如果isChangeColor为true，则切换到白色，否则保持不变
+      begin: widget.color ?? ColorTheme.green,
+      end: widget.color2 ?? ColorTheme.mainLight, // 如果isChangeColor为true，则切换到白色，否则保持不变
     );
     _colorAnimation = _colorTween.animate(
       CurvedAnimation(

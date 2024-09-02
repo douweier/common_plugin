@@ -13,6 +13,7 @@ export 'src/theme/button.dart';
 export 'src/theme/switch.dart';
 export 'src/theme/card_arrow.dart';
 export 'src/theme/card_view.dart';
+export 'src/theme/tab_bar.dart';
 export 'src/widget/app_view.dart';
 export 'src/widget/star_widget.dart';
 export 'src/widget/image_frame_animation.dart';

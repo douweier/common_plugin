@@ -10,7 +10,7 @@ class CardArrow extends StatelessWidget {
     this.icon,
     this.text = '',
     this.underText,
-    this.fontColor = ColorTheme.font,
+    this.fontColor,
     this.fontSize = 16.0,
     this.value = '',
     this.onPressed,
@@ -25,7 +25,7 @@ class CardArrow extends StatelessWidget {
     this.borderBottomShow = true,
     this.borderHeight = 1,
     this.showRedDot = false,
-    this.backgroundColor = ColorTheme.body,
+    this.backgroundColor,
     this.maxLines = 1,
   });
 
@@ -38,7 +38,7 @@ class CardArrow extends StatelessWidget {
   ///下面文字提示
   final String? underText;
 
-  final Color fontColor;
+  final Color? fontColor;
 
   final double fontSize;
 
@@ -80,13 +80,13 @@ class CardArrow extends StatelessWidget {
   ///显示红色小圆点
   final bool showRedDot;
 
-  final Color backgroundColor;
+  final Color? backgroundColor;
   final int maxLines;
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: backgroundColor,
+      color: backgroundColor ?? ColorTheme.background,
       child: InkWell(
         onTap: onPressed,
         child: Container(
@@ -126,7 +126,7 @@ class CardArrow extends StatelessWidget {
                         TextView(
                           text,
                           fontSize: fontSize,
-                          color: fontColor,
+                          color: fontColor ?? ColorTheme.font,
                         ),
                         if (showRedDot)
                           Container(

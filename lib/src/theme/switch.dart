@@ -6,19 +6,19 @@ class SwitchView extends StatefulWidget {
   const SwitchView({
     super.key,
     this.trackHeight = 15.0,
-    this.activeColor = ColorTheme.main,
-    this.inactiveThumbColor = ColorTheme.grey,
-    this.inactiveTrackColor = ColorTheme.grey,
-    this.activeThumbColor = ColorTheme.main,
+    this.activeColor,
+    this.inactiveThumbColor,
+    this.inactiveTrackColor,
+    this.activeThumbColor,
     this.value = false,
     this.onChanged,
   });
 
   final double trackHeight;
-  final Color activeColor;
-  final Color inactiveThumbColor;
-  final Color inactiveTrackColor;
-  final Color activeThumbColor;
+  final Color? activeColor;
+  final Color? inactiveThumbColor;
+  final Color? inactiveTrackColor;
+  final Color? activeThumbColor;
   final bool value;
   final ValueChanged<bool>? onChanged;
 
@@ -31,11 +31,19 @@ class _SwitchViewState extends State<SwitchView> with SingleTickerProviderStateM
   bool _isTouchedOrHovered = false;
   late final AnimationController _animationController;
   late final Animation<double> _offsetAnimation;
+   late Color activeColor;
+   late Color inactiveThumbColor;
+   late Color inactiveTrackColor;
+   late Color activeThumbColor;
 
   @override
   void initState() {
     super.initState();
     _switchValue = widget.value;
+    activeColor = widget.activeColor ?? ColorTheme.main;
+    inactiveThumbColor = widget.inactiveThumbColor ?? ColorTheme.grey;
+    inactiveTrackColor = widget.inactiveTrackColor ?? ColorTheme.grey;
+    activeThumbColor = widget.activeThumbColor ?? ColorTheme.main;
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
@@ -81,7 +89,7 @@ class _SwitchViewState extends State<SwitchView> with SingleTickerProviderStateM
                   width: widget.trackHeight * 2.5,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(widget.trackHeight / 2),
-                    color: _switchValue ? widget.activeColor.withOpacity(0.4) : widget.inactiveTrackColor.withOpacity(0.4),
+                    color: _switchValue ? activeColor.withOpacity(0.4) : inactiveTrackColor.withOpacity(0.4),
                   ),
                 ),
               ),
@@ -95,14 +103,14 @@ class _SwitchViewState extends State<SwitchView> with SingleTickerProviderStateM
                         : EdgeInsets.zero, // 按钮按下时显示边缘透明背景
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: widget.activeColor.withOpacity(0.2),
+                      color: activeColor.withOpacity(0.2),
                     ),
                     child: Container(
                       height: widget.trackHeight+6,
                       width: widget.trackHeight+6,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: _switchValue ? widget.activeThumbColor : widget.inactiveThumbColor,
+                        color: _switchValue ? activeThumbColor : inactiveThumbColor,
                       ),
                     ),
                   ),

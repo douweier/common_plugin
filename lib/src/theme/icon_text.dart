@@ -6,20 +6,20 @@ import 'package:flutter/rendering.dart';
 class IconText extends StatelessWidget {
   const IconText(
       this.icon, {
-        Key? key,
+        super.key,
         this.size = 35,
-        this.color = ColorTheme.white,
+        this.color,
         this.semanticLabel,
         this.textDirection,
         this.shadowShow = true,
         this.shadowColor = Colors.black54,
-      }) : super(key: key);
+      });
 
   final IconData icon;
 
   final double size;
 
-  final Color color;
+  final Color? color;
 
   final String? semanticLabel;
 
@@ -41,7 +41,7 @@ class IconText extends StatelessWidget {
 
 
     final double iconOpacity = iconTheme.opacity ?? 1.0;
-    Color iconColor = color;
+    Color iconColor = color ?? ColorTheme.white;
     if (iconOpacity != 1.0)
       iconColor = iconColor.withOpacity(iconColor.opacity * iconOpacity);
 
