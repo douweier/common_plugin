@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 class ColorTheme {
@@ -11,11 +10,14 @@ class ColorTheme {
   ///主体内容背景颜色
   static Color body = const Color(0xffffffff);
 
+  ///图标主题颜色
+  static Color icon = const Color(0xffcccccc);
+
   ///字体主要颜色
   static Color font = const Color(0xff333333);
 
   ///默认背景颜色
-  static Color background = const Color(0xfff7f7f7);
+  static Color background = const Color(0xfff5f5f5);
 
   ///边框颜色
   static Color border = const Color(0xfff0f0f0);
@@ -40,6 +42,12 @@ class ColorTheme {
 
   ///绿色
   static Color green = const Color(0xff4bb608);
+
+  ///橙色
+  static Color orange = const Color(0xfffa7a39);
+
+  ///浅黑
+  static Color lightFont = const Color(0xff666666);
 
   ///灰色
   static Color grey = const Color(0xff999999);
@@ -87,7 +95,8 @@ class TextView extends StatelessWidget {
   final Color shadowColor;
   final IconData? icon;
   const TextView(
-    this.text, {super.key,
+    this.text, {
+    super.key,
     this.color,
     this.fontSize = 14,
     this.fontWeight = FontWeight.w400,
@@ -103,31 +112,34 @@ class TextView extends StatelessWidget {
   Widget build(BuildContext context) {
     String? truncatedText;
     if (maxLength > 0 && text.length > maxLength) {
-       truncatedText = text.length > maxLength
-          ? text.substring(0, maxLength) + '...'
-          : text;
+      truncatedText =
+          text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
     }
     return RichText(
       maxLines: maxLines,
       overflow: overflow,
       text: TextSpan(
-        text: icon != null ? String.fromCharCode(icon!.codePoint) : (truncatedText ?? text),
+        text: icon != null
+            ? String.fromCharCode(icon!.codePoint)
+            : (truncatedText ?? text),
         style: TextStyle(
-            color: color ?? ColorTheme.font,
-            inherit: false,
-            fontSize: fontSize,
-            fontWeight: fontWeight,
-            fontFamily: icon != null ? 'iconFont' : '',
-            decoration: TextDecoration.none,
-            package: icon?.fontPackage,
-            shadows: shadowShow ? [
-              BoxShadow(
-                  color: shadowColor,
-                  offset: const Offset(0.1,0.1),
-                  blurRadius: 2.0, //阴影模糊程度
-                  spreadRadius: 0.3 //阴影扩散程度
-              ),
-            ] : [],
+          color: color ?? ColorTheme.font,
+          inherit: false,
+          fontSize: fontSize,
+          fontWeight: fontWeight,
+          fontFamily: icon != null ? 'iconFont' : '',
+          decoration: TextDecoration.none,
+          package: icon?.fontPackage,
+          shadows: shadowShow
+              ? [
+                  BoxShadow(
+                      color: shadowColor,
+                      offset: const Offset(0.1, 0.1),
+                      blurRadius: 2.0, //阴影模糊程度
+                      spreadRadius: 0.3 //阴影扩散程度
+                      ),
+                ]
+              : [],
         ),
       ),
     );

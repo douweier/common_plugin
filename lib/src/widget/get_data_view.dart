@@ -170,9 +170,10 @@ class _GetDataViewState extends State<GetDataView> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Image.asset(
-                              "assets/icon/icon_data_empty.png",
+                              "assets/images/icon_data_empty.png",
                               width: 80,
                               fit: BoxFit.cover,
+                              package: "common_plugin",
                             ),
                             Text(widget.noDataTip ?? '哎呀，什么都没有'),
                           ],

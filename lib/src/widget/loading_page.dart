@@ -70,6 +70,7 @@ class LoadingPage extends StatelessWidget {
                 "assets/images/loading_09.png",
                 "assets/images/loading_10.png",
               ],
+              package: "common_plugin",
               width: iconSize,
               height: iconSize,
               isLoop: true,
@@ -91,9 +92,10 @@ class LoadingPage extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image.asset(
-              "assets/icon/icon_data_empty.png",
+              "assets/images/icon_data_empty.png",
               width: iconSize,
               height: iconSize,
+              package: "common_plugin",
             ),
             if (!onlyShowIcon)
               Container(

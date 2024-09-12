@@ -16,6 +16,7 @@ class ImagesPickDragSort extends StatefulWidget {
   final double imageWidth; //图片宽度
   final double imageHeight; //图片高度
   final Widget? emptyIconWidget; //添加图片前显示的图标widget
+  final Widget? addIconWidget; //添加图片按钮widget
 
   ///选取本地的图片列表回调,被删除后的网络图片列表
   final Function(List<ImageItem>) onChanged;
@@ -31,6 +32,7 @@ class ImagesPickDragSort extends StatefulWidget {
     this.imageWidth = 70,
     this.imageHeight = 70,
     this.emptyIconWidget,
+    this.addIconWidget,
   }) : assert(maxImageNum > 0);
 
   @override
@@ -99,7 +101,7 @@ class _ImagesPickDragSortState extends State<ImagesPickDragSort> {
     return GridView.count(
       shrinkWrap: true,
       primary: false,
-      crossAxisCount: 3,
+      crossAxisCount: 4,
       physics: NeverScrollableScrollPhysics(),
       children: List.generate(mGridCount, (index) {
         if (index == combinedImageList.length) {
@@ -107,22 +109,17 @@ class _ImagesPickDragSortState extends State<ImagesPickDragSort> {
             onTap: () {
               albumImport();
             },
-            child:Container(
-              margin: const EdgeInsets.all(10.0),
-              width: widget.imageWidth,
-              height: widget.imageHeight,
-              color: Colors.white.withOpacity(0.6),
-              child: Center(
-                  child: Icon(
-                Icons.add_rounded,
-                color: Colors.grey,
-                size: 60,
-              )),
+            child:Center(
+              child: widget.addIconWidget ?? Image.asset("assets/images/add_menu.png",package: "common_plugin",
+                width: widget.imageWidth,
+                height: widget.imageHeight,
+                fit: BoxFit.cover,
+              ),
             ),
           );
         } else {
           // 被选中的图片
-          return draggableItem(combinedImageList[index], index);
+          return Center(child: draggableItem(combinedImageList[index], index));
         }
       }),
     );
@@ -179,7 +176,6 @@ class _ImagesPickDragSortState extends State<ImagesPickDragSort> {
         width: widget.imageWidth,
         height: widget.imageHeight,
         margin: const EdgeInsets.all(5.0),
-        padding: EdgeInsets.all(2),
         decoration: BoxDecoration(
           color: bgColor,
         ),
@@ -206,12 +202,17 @@ class _ImagesPickDragSortState extends State<ImagesPickDragSort> {
                     setState(() {});
                   });
                 },
-                child: Padding(
-                  padding: const EdgeInsets.all(5.0),
-                  child: IconText(
-                    Icons.highlight_remove,
-                    size: 24,
-                    shadowColor: Colors.black,
+                child: Container(
+                  padding: const EdgeInsets.all(3.0),
+                  margin: const EdgeInsets.all(2.0),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.4),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.close_rounded, // 删除图标
+                    size: 18,
+                    color: Colors.white,
                   ),
                 ),
               ),

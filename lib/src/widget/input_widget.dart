@@ -34,15 +34,21 @@ class InputView extends StatefulWidget {
     this.onlyRead = false,
     this.rightUnit = '',
     required this.onChanged,
-    this.minLines,
+    this.textAlign = TextAlign.left,
+    this.minLines = 1,
     this.maxLines = 1,
-    this.maxLength = 20,
+    this.maxLength,
     this.minLength = 0,
-    this.padding = const EdgeInsets.symmetric(horizontal: 0),
+    this.padding = const EdgeInsets.symmetric(horizontal: 0,vertical: 7),
+    this.contentPadding = const EdgeInsets.symmetric(horizontal: 10,vertical: 8),
     this.backgroundColor = Colors.white,
     this.inputBackgroundColor = Colors.white12,
+    this.inputBorderColor = const Color(0xffe5e5e5),
     this.required = false,
     this.autoFillPlaceholder = false,
+    this.isShowInputBorder = true,
+    this.borderRadius = const BorderRadius.all(Radius.circular(5)),
+    this.autoFocus = false,
   });
 
   ///允许类型
@@ -53,7 +59,12 @@ class InputView extends StatefulWidget {
   final String inputTips; //提示信息
   final bool onlyRead; //只读
   final String placeHolder; //占位符
-  final EdgeInsetsGeometry padding;
+  final EdgeInsetsGeometry padding; //组件内边距
+  final EdgeInsetsGeometry? contentPadding; //内容内边距
+  final BorderRadius borderRadius; //边框圆角
+
+  ///文本对齐方式
+  final TextAlign textAlign;
 
   ///一行显示标签
   final bool inLineOnly;
@@ -62,13 +73,16 @@ class InputView extends StatefulWidget {
   final String rightUnit;
   final int? minLines;
   final int maxLines;
-  final int maxLength;
+  final int? maxLength;
   final int minLength;
   final ValueChanged<String> onChanged;
-  final Color backgroundColor;
-  final Color inputBackgroundColor;
+  final bool isShowInputBorder; //是否显示输入边框
+  final Color inputBorderColor;
+  final Color backgroundColor; //组件背景色
+  final Color inputBackgroundColor; //输入框背景色
   final bool required;
   final bool autoFillPlaceholder; //点击输入时value为空是否自动填充占位符
+  final bool autoFocus; //自动获取焦点
 
   @override
   _InputViewState createState() => _InputViewState();
@@ -122,7 +136,6 @@ class _InputViewState extends State<InputView> {
     return Container(
         padding: EdgeInsets.only(right: 5),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             TextView(
               widget.label,
@@ -176,16 +189,12 @@ class _InputViewState extends State<InputView> {
           Container(
             decoration: BoxDecoration(
               color: widget.backgroundColor,
-              borderRadius: const BorderRadius.all(const Radius.circular(5)),
-              border: new Border.all(color: ColorTheme.border, width: 0.5),
+              borderRadius: widget.borderRadius,
             ),
             child: Row(
               children: [
                 if (widget.inLineOnly && widget.label.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(left: 8.0),
-                    child: buildLabel(),
-                  ),
+                  buildLabel(),
                 Expanded(
                   child: TextField(
                     controller: controller,
@@ -193,7 +202,9 @@ class _InputViewState extends State<InputView> {
                     maxLines: widget.inputAllowType == InputAllowType.password ? 1 : widget.maxLines,
                     cursorColor: Colors.lightBlue,
                     readOnly: widget.onlyRead,
+                    textAlign: widget.textAlign,
                     focusNode: focusNode,
+                    autofocus: widget.autoFocus,
                     obscureText: widget.inputAllowType == InputAllowType.password,
                     inputFormatters: [
                       if (inputDenyValue != '')
@@ -204,17 +215,17 @@ class _InputViewState extends State<InputView> {
                             RegExp(inputAllowValue)),
                       // WhitelistingTextInputFormatter(RegExp(
                       // "[a-zA-Z]|[\u4e00-\u9fa5]|[0-9]")),
-                      LengthLimitingTextInputFormatter(widget.maxLength), //最大长度
+                      if (widget.maxLength != null)
+                        LengthLimitingTextInputFormatter(widget.maxLength), //最大长度
                     ],
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: widget.inputBackgroundColor,
-                      contentPadding: EdgeInsets.all(13),
-                      enabledBorder: const OutlineInputBorder(
+                      contentPadding: widget.contentPadding,
+                      enabledBorder: OutlineInputBorder(
                         borderSide:
-                            const BorderSide(color: Colors.black12, width: 0.0),
-                        borderRadius:
-                            const BorderRadius.all(const Radius.circular(5)),
+                             BorderSide(color: widget.isShowInputBorder ? widget.inputBorderColor : Colors.transparent, width: 0.2),
+                        borderRadius:widget.borderRadius,
                       ),
                       // focusedBorder: const OutlineInputBorder(
                       //   borderSide: const BorderSide(color: Colors.white, width: 0.0),
@@ -234,8 +245,11 @@ class _InputViewState extends State<InputView> {
                     onChanged: (s) {
                       setState(() {
                         inputText = s;
-                        if (inputText.length > widget.maxLength) {
-                          showAlert('超过了最大字数限制',alignment: Alignment.center);
+                        if (widget.maxLength != null) {
+                          if (s.length > widget.maxLength!) {
+                            inputText = s.substring(0, widget.maxLength);
+                            showAlert('超过了最大字数限制',alignment: Alignment.center);
+                          }
                         }
                         //如果为onlyInt类型，如果超过length长度超过1个以上以0开头就去掉第一个0
                         if (widget.inputAllowType == InputAllowType.onlyInt && inputText.length > 1) {
@@ -288,6 +302,7 @@ class _InputViewState extends State<InputView> {
               ],
             ),
           ),
+          if (!widget.inLineOnly && (widget.inputTips != '' || widget.maxLength != null))
           Padding(
             padding: const EdgeInsets.only(top: 5.0),
             child: Row(
@@ -298,7 +313,7 @@ class _InputViewState extends State<InputView> {
                   child: Padding(
                     padding: const EdgeInsets.only(right: 18.0),
                     child: TextView(
-                      (inputText.length) > widget.maxLength
+                      (widget.maxLength != null && (inputText.length) > (widget.maxLength ?? 0))
                           ? '超过了最大字数，请减少输入'
                           : widget.inputTips,
                       maxLines: 3,
@@ -306,12 +321,12 @@ class _InputViewState extends State<InputView> {
                     ),
                   ),
                 ),
-                if (!widget.inLineOnly)
+                if (!widget.inLineOnly && widget.maxLength != null)
                   Row(
                     children: [
                       TextView(
                         '${inputText.length}',
-                        color: (inputText.length) > widget.maxLength
+                        color: (inputText.length) > widget.maxLength!
                             ? ColorTheme.red
                             : ColorTheme.main,
                         fontSize: 14,

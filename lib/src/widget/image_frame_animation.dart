@@ -12,10 +12,11 @@ class ImageFrameAnimation extends StatefulWidget {
   final int interval; //每帧间隔时间
   final int endInterval; //播放完间隔时间
   final bool isStart; //控制是否播放,默认为true
+  final String? package; //资源包名
 
 
   const ImageFrameAnimation(this.imageAssets,
-      {Key? key, this.width, this.height, this.isStart = true,this.interval = 150,this.endInterval = 0, this.onCompletion, this.isLoop = false}) : super(key: key);
+      {Key? key, this.width, this.height, this.isStart = true,this.interval = 150,this.endInterval = 0, this.onCompletion, this.isLoop = false, this.package}) : super(key: key);
 
 
   @override
@@ -123,6 +124,7 @@ class ImageFrameAnimationState extends State<ImageFrameAnimation>
          widget.imageAssets[i],
          width: 0,
          height: 0,
+         package: widget.package,
        ));
      }
    }
@@ -130,6 +132,7 @@ class ImageFrameAnimationState extends State<ImageFrameAnimation>
      widget.imageAssets[ix],
      width: widget.width,
      height: widget.height,
+     package: widget.package,
    ));
 
 

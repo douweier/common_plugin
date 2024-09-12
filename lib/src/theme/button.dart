@@ -189,7 +189,7 @@ class ButtonBack extends StatelessWidget {
   Widget build(BuildContext context) {
     return IconButton(
       icon: IconText(
-        Icons.arrow_back_ios,
+        Icons.arrow_back_ios_rounded,
         size: size,
         color: color ?? ColorTheme.white,
         shadowShow: shadowShow,

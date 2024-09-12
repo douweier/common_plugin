@@ -1,8 +1,6 @@
-
 import 'package:common_plugin/common_plugin.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
 
 class AppView extends StatelessWidget {
   final String? title;
@@ -18,6 +16,10 @@ class AppView extends StatelessWidget {
   final EdgeInsets? padding;
   final Widget? bottomSheet;
   final bool showAppBarBackImage;
+  final Widget? floatingActionButton;
+  final FloatingActionButtonLocation? floatingActionButtonLocation;
+  final SystemUiOverlayStyle? systemOverlayStyle;
+
 
   const AppView({
     Key? key,
@@ -34,11 +36,18 @@ class AppView extends StatelessWidget {
     this.bottomSheet,
     this.actions,
     this.showAppBarBackImage = true,
+    this.floatingActionButton,
+    this.floatingActionButtonLocation,
+    this.systemOverlayStyle = const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarIconBrightness: Brightness.dark,
+    ),
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark);
     final ModalRoute<dynamic>? parentRoute = ModalRoute.of(context);
     final bool canPop = parentRoute?.canPop ?? false;
 
@@ -48,17 +57,25 @@ class AppView extends StatelessWidget {
           ? AppBar(
               elevation: elevation,
               toolbarHeight: 50,
-              title: titleWidget ?? Text(title!,style: TextStyle(fontSize: titleFontSize,color: titleFontColor ?? ColorTheme.font,),),
+              title: titleWidget ??
+                  Text(
+                    title!,
+                    style: TextStyle(
+                      fontSize: titleFontSize,
+                      color: titleFontColor ?? ColorTheme.font,
+                    ),
+                  ),
               centerTitle: true,
               backgroundColor: appBarBackColor ?? ColorTheme.body,
-              shadowColor: ColorTheme.border.withOpacity(.6),
-              systemOverlayStyle: SystemUiOverlayStyle.dark,
+              shadowColor: ColorTheme.border.withOpacity(.3),
+              systemOverlayStyle: systemOverlayStyle,
               flexibleSpace: showAppBarBackImage
                   ? Container(
                       decoration: const BoxDecoration(
                         //           gradient: LinearGradient(colors: lineGradColor ?? MyColor.lineGradBlue),
                         image: DecorationImage(
-                          image: AssetImage("assets/images/apptopbg.png",package:"common_plugin"),
+                          image: AssetImage("assets/images/apptopbg.png",
+                              package: "common_plugin"),
                           fit: BoxFit.cover,
                           alignment: Alignment.topLeft,
                         ),
@@ -78,6 +95,9 @@ class AppView extends StatelessWidget {
       body: Container(padding: padding, child: body ?? Container()),
       backgroundColor: backgroundColor ?? ColorTheme.background,
       resizeToAvoidBottomInset: true,
+      floatingActionButton: floatingActionButton,
+      floatingActionButtonLocation: floatingActionButtonLocation, // 悬浮按钮位置
+      floatingActionButtonAnimator: FloatingActionButtonAnimator.scaling, // 悬浮按钮动画
     );
   }
 }

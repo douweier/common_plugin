@@ -3,25 +3,26 @@ import 'package:common_plugin/src/theme/switch.dart';
 import 'package:common_plugin/src/theme/theme.dart';
 import 'package:flutter/material.dart';
 
-class CardArrow extends StatelessWidget {
+class SettingItemView extends StatelessWidget {
   ///默认卡片箭头栏，switchShow=true开启开关栏样式
-  const CardArrow({
+  const SettingItemView({
     super.key,
     this.icon,
     this.text = '',
     this.underText,
     this.fontColor,
     this.fontSize = 16.0,
+    this.valueFontSize = 16.0,
     this.value = '',
     this.onPressed,
     this.top = 0,
     this.bottom = 0,
     this.required = false,
-    this.padding = const EdgeInsets.fromLTRB(16, 13, 16, 13),
+    this.padding = const EdgeInsets. symmetric(horizontal: 0,vertical: 15),
     this.switchShow = false,
     this.switchValue,
     this.switchOnChanged,
-    this.borderTopShow = true,
+    this.borderTopShow = false,
     this.borderBottomShow = true,
     this.borderHeight = 1,
     this.showRedDot = false,
@@ -41,6 +42,7 @@ class CardArrow extends StatelessWidget {
   final Color? fontColor;
 
   final double fontSize;
+  final double valueFontSize;
 
   ///右边显示值
   final String value;
@@ -86,7 +88,7 @@ class CardArrow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: backgroundColor ?? ColorTheme.background,
+      color: backgroundColor,
       child: InkWell(
         onTap: onPressed,
         child: Container(
@@ -207,12 +209,12 @@ class CardArrow extends StatelessWidget {
                                 alignment: Alignment.centerRight,
                                   child: Padding(
                                     padding: const EdgeInsets.symmetric(horizontal: 5),
-                                    child: TextView(value,color: ColorTheme.grey,),
+                                    child: TextView(value,color: ColorTheme.grey,fontSize: valueFontSize,),
                                   ))),
                               Padding(
                                   padding: const EdgeInsets.only(right: 8.0),
                                   child: Icon(
-                                    Icons.arrow_forward_ios,
+                                    Icons.arrow_forward_ios_rounded,
                                     size: 18,
                                     color: Colors.grey,
                                   )),

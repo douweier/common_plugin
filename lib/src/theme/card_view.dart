@@ -1,6 +1,14 @@
 import 'package:common_plugin/common_plugin.dart';
 import 'package:flutter/material.dart';
 
+//枚举CardView的title标题样式，默认风格为居中样式，居左时就是标题前一条竖线
+enum CardTitleStyle {
+  center,
+  left,
+  none
+}
+
+
 class CardView extends StatelessWidget {
   const CardView({
     super.key,
@@ -11,14 +19,16 @@ class CardView extends StatelessWidget {
     this.shadowColor,
     this.blurRadius = 1.0,
     this.margin,
-    this.padding = const EdgeInsets.symmetric(vertical: 15,horizontal: 10),
+    this.padding = const EdgeInsets.symmetric(vertical: 15,horizontal: 15),
     required this.child,
     this.semanticContainer = true,
     this.borderRadius = const BorderRadius.all(Radius.circular(5)),
     this.backgroundImage,
-    this.showBackgroundImage = true,
+    this.showBackgroundImage = false,
     this.title,
-    this.titleCenter = false,
+    this.titleRightWidget,
+    this.isShowTitleBorder = true,
+    this.titleStyle = CardTitleStyle.center,
     this.titleAlignment = Alignment.topLeft,
     this.titleFontColor = const Color(0xff333333),
     this.titleFontSize = 16.0,
@@ -52,8 +62,13 @@ class CardView extends StatelessWidget {
 
   final String? title;
 
-  ///标题居中显示样式
-  final bool titleCenter;
+  ///标题栏右边的widget
+  final Widget? titleRightWidget;
+
+  ///标题样式，CardTitleStyle.center为居中两边放射线，CardTitleStyle.left为居左竖线样式
+  final CardTitleStyle titleStyle;
+
+  final bool isShowTitleBorder; //是否显示标题下分割的边框线
   
   ///标题字体颜色
   final Color titleFontColor;
@@ -72,7 +87,7 @@ class CardView extends StatelessWidget {
         alignment: alignment,
         width: width,
         height: height,
-        margin: margin ?? cardTheme.margin ?? const EdgeInsets.all(5.0),
+        margin: margin ?? cardTheme.margin ?? const EdgeInsets.symmetric(horizontal: 7,vertical: 4),
         padding: padding,
         decoration: BoxDecoration(
           borderRadius: borderRadius,
@@ -85,9 +100,9 @@ class CardView extends StatelessWidget {
               ),
             ],
           image: showBackgroundImage ? DecorationImage(
-            image: AssetImage(backgroundImage ?? "assets/images/screen_bg.png"),
-            fit: BoxFit.cover,
-            alignment: Alignment.topLeft,
+            image: backgroundImage != null ? AssetImage(backgroundImage!) : AssetImage("assets/images/screen_bg.png",package:"common_plugin"),
+            fit: BoxFit.fitWidth,
+            alignment: Alignment.topCenter,
           ) : null,
           color: color ?? cardTheme.color ?? theme.cardColor,
         ),
@@ -98,17 +113,27 @@ class CardView extends StatelessWidget {
                 padding: EdgeInsets.only(bottom: 10),
                 margin: EdgeInsets.only(bottom: 5),
                 alignment: titleAlignment,
-                decoration: BoxDecoration(
+                decoration: isShowTitleBorder ? BoxDecoration(
                   border: Border(
                       bottom: BorderSide(
                         color: ColorTheme.border,
                         width: 1,
                         style: BorderStyle.solid,
                       )),
-                ),
+                ) : null,
                 child: Row(
                   children: [
-                    if(titleCenter)
+                    if(titleStyle == CardTitleStyle.left)
+                    Container(
+                      decoration: BoxDecoration(
+                        color: ColorTheme.main,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      width: 3,
+                      height: 20,
+                      margin: EdgeInsets.only(right: 10),
+                    ),
+                    if(titleStyle == CardTitleStyle.center)
                     Expanded(
                       child: Row(
                         children: [
@@ -151,7 +176,7 @@ class CardView extends StatelessWidget {
                       ),
                     ),
                     Text("$title",style: TextStyle(fontWeight: FontWeight.w500,color: titleFontColor,fontSize: titleFontSize),),
-                    if(titleCenter)
+                    if(titleStyle == CardTitleStyle.center)
                     Expanded(
                       child: Row(
                         children: [
@@ -193,6 +218,8 @@ class CardView extends StatelessWidget {
                         ],
                       ),
                     ),
+                    if (titleRightWidget!= null)
+                      Expanded(child: Align(alignment: Alignment.centerRight,child: titleRightWidget!)),
                   ],
                 ),
               ),
