@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:common_plugin/common_plugin.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import "package:intl/intl.dart";
-
-
+import 'package:path_provider/path_provider.dart';
 
 ///效验数据是否为空为零或为null
 bool isEmptyOrNull(dynamic value) {
@@ -29,19 +29,22 @@ bool isEmptyOrNull(dynamic value) {
 ///    中间这里为数据获取逻辑
 ///    result = await awaitDataSuccess((){return value;},timeout:30);
 ///
-Future<dynamic> awaitSuccess(Function valueReturn,
-    {int timeout = 30,
-    int waitTimeShowLading = 300, // 毫秒，超过指定时间显示加载动画
-     }) async {
+Future<dynamic> awaitSuccess(
+  Function valueReturn, {
+  int timeout = 30,
+  int waitTimeShowLading = 300, // 毫秒，超过指定时间显示加载动画
+}) async {
   int count = 0;
   final maxCount = timeout * 40; // 换算超时的循环次数
   dynamic result;
   late Timer timer;
-  timer = Timer(Duration(milliseconds: waitTimeShowLading), (){
-    ShowOverScreen.show(LoadingPage(
-      onlyShowIcon: true,
-      showAppScaffold: false,
-    ),autoCloseTime: timeout);
+  timer = Timer(Duration(milliseconds: waitTimeShowLading), () {
+    ShowOverScreen.show(
+        LoadingPage(
+          onlyShowIcon: true,
+          showAppScaffold: false,
+        ),
+        autoCloseTime: timeout);
   });
   await Future.doWhile(() async {
     result = valueReturn();
@@ -63,19 +66,20 @@ Future<dynamic> awaitSuccess(Function valueReturn,
 
 /// 等待指定超时时间后显示加载动画
 Future<T> awaitTimeShowLoading<T>(
-    Future<T> Function() future,
-    {
-      BuildContext? context,
-      int waitTime = 300, // 毫秒，超过指定时间显示加载动画
-      int timeout = 30, // 秒，超时取消时间
-    }) async {
+  Future<T> Function() future, {
+  BuildContext? context,
+  int waitTime = 300, // 毫秒，超过指定时间显示加载动画
+  int timeout = 30, // 秒，超时取消时间
+}) async {
   final completer = Completer<T>();
   late Timer timer;
-  timer = Timer(Duration(milliseconds: waitTime), (){
-    ShowOverScreen.show(LoadingPage(
-      onlyShowIcon: true,
-      showAppScaffold: false,
-    ),autoCloseTime: timeout);
+  timer = Timer(Duration(milliseconds: waitTime), () {
+    ShowOverScreen.show(
+        LoadingPage(
+          onlyShowIcon: true,
+          showAppScaffold: false,
+        ),
+        autoCloseTime: timeout);
   });
 
   try {
@@ -120,39 +124,82 @@ void showDebug(dynamic value, {String? mark}) {
   log("\n\n-----------  tishi$effectiveMark  ----------\n$jsonString\n---------------------------------------------\n");
 }
 
-
-///全局Context路由
-openTo(
-    T, {
-      bool checkLogin = false,
-      BuildContext? context,
-      bool removeAllRoute = false,
-    }) async {
+/// 打开导航页面
+toNav(
+  T, {
+  bool checkLogin = false,
+  BuildContext? context,
+  bool removeAllRoute = false,
+}) async {
   context ??= contextIndex;
 
   if (removeAllRoute) {
-    return await Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (build) {
+    return await Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (build) {
       return T;
-    }),(route) => false);
-  }else {
+    }), (route) => false);
+  } else {
     return await Navigator.of(context).push(MaterialPageRoute(builder: (build) {
       return T;
     }));
   }
 }
 
-/// 重启app openToName(Routes.appInit); removeAllRoute = true清除路由，用户不能后退
-openToName(String routes,{BuildContext? context,bool removeAllRoute = false}) async {
+/// 重启app toNavName(Routes.appInit); removeAllRoute = true清除路由，用户不能后退
+toNavName(String routes,
+    {BuildContext? context, bool removeAllRoute = false}) async {
   context ??= contextIndex;
-  if (removeAllRoute){
-   await Navigator.of(context).pushNamedAndRemoveUntil(routes, (router) => false);
-  }
-  else{
-   await Navigator.of(context).pushNamed(routes);
+  if (removeAllRoute) {
+    await Navigator.of(context)
+        .pushNamedAndRemoveUntil(routes, (router) => false);
+  } else {
+    await Navigator.of(context).pushNamed(routes);
   }
 }
 
 /// 返回
-back<T extends Object?>({T? result,BuildContext? context,}) {
+back<T extends Object?>({
+  T? result,
+  BuildContext? context,
+}) {
   Navigator.of(context ?? contextIndex).pop(result);
+}
+
+///获取用户保存的文件目录
+Future getPathUserFile() async {
+  var cachePath =
+      Directory("${(await getApplicationDocumentsDirectory()).path}/file");
+  if (!cachePath.existsSync()) {
+    cachePath.create();
+  }
+  return cachePath.path;
+}
+
+///获取下载文件缓存目录
+Future getPathDownload() async {
+  var cachePath =
+      Directory("${(await getApplicationDocumentsDirectory()).path}/download");
+  if (!cachePath.existsSync()) {
+    cachePath.create();
+  }
+  return cachePath.path;
+}
+
+///获取永久缓存目录，由app管理缓存
+Future getPathCache() async {
+  var cachePath =
+      Directory("${(await getApplicationDocumentsDirectory()).path}/cache");
+  if (!cachePath.existsSync()) {
+    cachePath.create();
+  }
+  return cachePath.path;
+}
+
+///获取临时缓存总目录，会被系统自动清理
+Future getPathCacheTemp() async {
+  var cachePath = Directory("${(await getTemporaryDirectory()).path}/cache");
+  if (!cachePath.existsSync()) {
+    cachePath.create();
+  }
+  return cachePath.path;
 }

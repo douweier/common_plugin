@@ -1,4 +1,3 @@
-
 import 'package:common_plugin/common_plugin.dart';
 import 'package:flutter/widgets.dart';
 
@@ -6,7 +5,8 @@ import 'package:flutter/widgets.dart';
 class ShowOverScreen {
   static OverlayEntry? overlayEntry;
 
-  static void show( Widget child, {
+  static void show(
+    Widget child, {
     BuildContext? context,
     int? autoCloseTime,
   }) {
@@ -16,7 +16,7 @@ class ShowOverScreen {
         Overlay.of(context ?? contextIndex).insert(overlayEntry!);
         if (autoCloseTime != null) {
           Future.delayed(Duration(seconds: autoCloseTime), () {
-            ShowOverScreen.remove();
+            remove();
           });
         }
       }
@@ -24,8 +24,8 @@ class ShowOverScreen {
 
   static void remove() {
     if (overlayEntry != null) {
-          overlayEntry?.remove();
-          overlayEntry = null;
-        }
+      overlayEntry?.remove();
+      overlayEntry = null;
+    }
   }
 }

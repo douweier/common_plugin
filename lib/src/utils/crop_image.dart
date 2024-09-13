@@ -38,7 +38,7 @@ class _CropImageViewState extends State<CropImageView> {
     setState(() {
        if (newAspectRatio == 0){
          Navigator.pop(context);
-         openTo(CropImageView(
+         toNav(CropImageView(
            path: widget.path,
            image: widget.image,
            toolbarTitle: widget.toolbarTitle,

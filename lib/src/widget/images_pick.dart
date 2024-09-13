@@ -272,7 +272,7 @@ class _ImagesPickDragSortState extends State<ImagesPickDragSort> {
       if (image == null){ return;}
 
       if (widget.isCrop){ // 裁剪
-       openTo(CropImageView(
+       toNav(CropImageView(
          path: image.first.path,
          aspectRatio: widget.aspectRatio,
          onCallBack: (path,image) async {

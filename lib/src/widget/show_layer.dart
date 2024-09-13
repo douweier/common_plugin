@@ -4,81 +4,87 @@ import 'package:common_plugin/src/theme/button.dart';
 import 'package:common_plugin/src/theme/theme.dart';
 import 'package:flutter/material.dart';
 
-bool isWillPopExitApp = true; //默认开启连续点两次返回退出app
 
-///自定义弹出层
-showLayer({
-  Widget? child,
 
-  ///点击外部区域关闭窗体
-  bool barrierDismissible = true,
+/// 弹出层控制器
+class LayerController {
+  static OverlayEntry? overlayEntry;
+  static bool isWillPopExitApp = true; //默认开启连续点两次返回退出app
 
-  ///点击主体界面关闭窗体
-  bool clickBodyClose = false,
+  /// 弹出层
+  static show({
+    Widget? child,
 
-  ///窗体对齐
-  AlignmentGeometry alignment = Alignment.center,
+    ///点击外部区域关闭窗体
+    bool barrierDismissible = true,
 
-  ///设置时间多少秒自动关闭窗体，默认一直显示
-  int autoCloseTime = 0,
-  BuildContext? context,
-  Color barrierColor = Colors.black54,
-  //barrierDismissible为true在层期间禁用Pop返回
-  bool wllPopExitApp = false,
-}) {
-  isWillPopExitApp = wllPopExitApp;
+    ///点击主体界面关闭窗体
+    bool clickBodyClose = false,
 
-  OverlayEntry? _overlayEntry;
-  context = context ?? contextIndex;
+    ///窗体对齐
+    AlignmentGeometry alignment = Alignment.center,
 
-  if (autoCloseTime > 0) {
-    Future.delayed(Duration(seconds: autoCloseTime), () {
-      if (_overlayEntry != null) {
-        isWillPopExitApp = true;
-        _overlayEntry?.remove();
-        _overlayEntry = null;
-      }
-    });
-  }
+    ///设置时间多少秒自动关闭窗体，默认一直显示
+    int autoCloseTime = 0,
+    BuildContext? context,
+    Color barrierColor = Colors.black54,
+    //barrierDismissible为true在层期间禁用Pop返回
+    bool wllPopExitApp = false,
+  }) {
+    isWillPopExitApp = wllPopExitApp;
 
-  Widget _layerWidget = GestureDetector(
-    onTap: () {
-      if (_overlayEntry != null && barrierDismissible) {
-        isWillPopExitApp = true;
-        _overlayEntry?.remove();
-        _overlayEntry = null;
-      }
-    },
-    child: PopScope(
-      canPop: false,
-      child: Material(
-        color: Colors.transparent,
-        child: Container(
-          color: barrierColor,
-          width: screenSize.width,
-          height: screenSize.height,
-          child: Align(
-            alignment: alignment,
-            child: GestureDetector(
-              onTap: () {
-                if (_overlayEntry != null && clickBodyClose) {
-                  isWillPopExitApp = true;
-                  _overlayEntry?.remove();
-                  _overlayEntry = null;
-                }
-              },
-              child: child,
+
+    context = context ?? contextIndex;
+
+    if (autoCloseTime > 0) {
+      Future.delayed(Duration(seconds: autoCloseTime), () {
+        if (overlayEntry != null) {
+          isWillPopExitApp = true;
+          overlayEntry?.remove();
+          overlayEntry = null;
+        }
+      });
+    }
+
+    Widget _layerWidget = GestureDetector(
+      onTap: () {
+        if (overlayEntry != null && barrierDismissible) {
+          isWillPopExitApp = true;
+          overlayEntry?.remove();
+          overlayEntry = null;
+        }
+      },
+      child: PopScope(
+        canPop: false,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            color: barrierColor,
+            width: screenSize.width,
+            height: screenSize.height,
+            child: Align(
+              alignment: alignment,
+              child: GestureDetector(
+                onTap: () {
+                  if (overlayEntry != null && clickBodyClose) {
+                    isWillPopExitApp = true;
+                    overlayEntry?.remove();
+                    overlayEntry = null;
+                  }
+                },
+                child: child,
+              ),
             ),
           ),
         ),
       ),
-    ),
-  );
+    );
 
-  if (_overlayEntry == null) {
-    _overlayEntry = OverlayEntry(
-        builder: (BuildContext context) => SafeArea(child: _layerWidget));
-    Overlay.of(context).insert(_overlayEntry!);
+    if (overlayEntry == null) {
+      overlayEntry = OverlayEntry(
+          builder: (BuildContext context) => SafeArea(child: _layerWidget));
+      Overlay.of(context).insert(overlayEntry!);
+    }
   }
 }
 
@@ -160,7 +166,7 @@ showAlert(
     alignment = Alignment.center;
   }
 
-  showLayer(
+  LayerController.show(
       alignment: alignment,
       clickBodyClose: true,
       barrierDismissible: true,
@@ -229,7 +235,7 @@ Future showDialogLayer({
   BuildContext? context,
   Color barrierColor = Colors.black12,
 }) async {
-  isWillPopExitApp = false; //barrierDismissible为true在层期间禁用Pop返回
+  LayerController.isWillPopExitApp = false; //barrierDismissible为true在层期间禁用Pop返回
 
   OverlayEntry? _overlayEntry;
 
@@ -238,7 +244,7 @@ Future showDialogLayer({
   Widget _layerWidget = GestureDetector(
     onTap: () {
       if (_overlayEntry != null && barrierDismissible) {
-        isWillPopExitApp = true;
+        LayerController.isWillPopExitApp = true;
         _overlayEntry?.remove();
         _overlayEntry = null;
       }
@@ -250,7 +256,7 @@ Future showDialogLayer({
           onTap: () {
             if (clickBodyClose) {
               if (_overlayEntry != null) {
-                isWillPopExitApp = true;
+                LayerController.isWillPopExitApp = true;
                 _overlayEntry?.remove();
                 _overlayEntry = null;
               }
@@ -323,7 +329,7 @@ Future showDialogLayer({
                               onCancelCallBack.call();
                             }
                             if (_overlayEntry != null) {
-                              isWillPopExitApp = true;
+                              LayerController.isWillPopExitApp = true;
                               _overlayEntry?.remove();
                               _overlayEntry = null;
                             }
@@ -339,7 +345,7 @@ Future showDialogLayer({
                         text: ok,
                         onPressed: () {
                           if (_overlayEntry != null) {
-                            isWillPopExitApp = true;
+                            LayerController.isWillPopExitApp = true;
                             _overlayEntry?.remove();
                             _overlayEntry = null;
                           }
