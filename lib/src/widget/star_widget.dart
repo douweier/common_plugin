@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 
 
 class StarWidget extends StatefulWidget {
-  StarWidget({
+  const StarWidget({super.key,
     this.backStar = const IconText(Icons.star_rate_sharp,color: Colors.black12,shadowShow: false,size: 24,),
     this.selectStar = const IconText(Icons.star_rate_sharp,color: Color(0xfffcd205),shadowShow: false,size: 24,),
     this.starCount = 5,

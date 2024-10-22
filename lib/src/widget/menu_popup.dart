@@ -1,7 +1,7 @@
 import 'package:common_plugin/common_plugin.dart';
 import 'package:flutter/material.dart';
 
-class MenuPopupItem {
+class MenuItem {
   final String text;
   final Color fontColor;
   final double fontSize;
@@ -9,7 +9,7 @@ class MenuPopupItem {
   final String? iconAssets;
   final IconData? icon;
   final Function()? onTap;
-   MenuPopupItem({required this.text, this.iconAssets, this.icon, this.onTap, this.fontColor = Colors.white, this.fontSize = 14, this.fontWeight = FontWeight.w400,});
+   MenuItem({required this.text, this.iconAssets, this.icon, this.onTap, this.fontColor = Colors.white, this.fontSize = 14, this.fontWeight = FontWeight.w400,});
 }
 
 /// 弹出菜单
@@ -28,7 +28,7 @@ class MenuPopup extends StatefulWidget {
 
 
 
-  final List<MenuPopupItem> menus;
+  final List<MenuItem> menus;
 
   ///在该组件点击或长按弹出菜单actions
   final Widget child;
@@ -146,7 +146,7 @@ const double _MenuScreenPadding = 8.0;
 
 class _MenuPopWidget extends StatefulWidget {
   final BuildContext btnContext;
-  final List<MenuPopupItem> menus;
+  final List<MenuItem> menus;
   final bool showArrow;
   final int _pageMaxChildCount;
   final Color backgroundColor;
@@ -195,13 +195,14 @@ class _MenuPopWidgetState extends State<_MenuPopWidget> {
     );
   }
 
+
   @override
   Widget build(BuildContext context) {
     //统计该页面 child 的数量
     int _curPageChildCount =
-        (_curPage + 1) * widget._pageMaxChildCount > widget.menus.length
-            ? widget.menus.length % widget._pageMaxChildCount
-            : widget._pageMaxChildCount;
+    (_curPage + 1) * widget._pageMaxChildCount > widget.menus.length
+        ? widget.menus.length % widget._pageMaxChildCount
+        : widget._pageMaxChildCount;
 
     double _curArrowWidth = 0;
     int _curArrowCount = 0; // 计算箭头数量
@@ -222,7 +223,6 @@ class _MenuPopWidgetState extends State<_MenuPopWidget> {
     double _curPageWidth = widget.menuWidth +
         (_curPageChildCount - 1 + _curArrowCount) * _separatorWidth +
         _curArrowWidth;
-
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () {
@@ -236,34 +236,33 @@ class _MenuPopWidgetState extends State<_MenuPopWidget> {
         removeRight: true,
         child: Builder(
           builder: (BuildContext context) {
-            //计算箭头true在上面，false在下面
             var isInverted = (position.top +
-                    (MediaQuery.of(context).size.height -
-                            position.top -
-                            position.bottom) /
-                        2 -
-                    ((widget.menus.length) * 50 + _triangleHeight)) <
-                ((widget.menus.length) * 50 + _triangleHeight);
+                (MediaQuery.of(context).size.height -
+                    position.top -
+                    position.bottom) /
+                    2 -
+                ((widget.menus.length) * 50)) <
+                ((widget.menus.length) * 50);
             return CustomSingleChildLayout(
-              // 这里计算偏移量
               delegate: _PopupMenuRouteLayout(
                   position,
-                  (widget.menus.length) * 50 + _triangleHeight,
+                  (widget.menus.length) * 50,
                   Directionality.of(widget.btnContext),
                   widget._width,
                   widget.menuWidth,
                   widget._height),
               child: SizedBox(
-                height: (widget.menus.length) * 50 + _triangleHeight + 20,
+                height: (widget.menus.length) * 50 + 20, // 移除三角形高度
                 width: _curPageWidth,
                 child: Container(
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
+                    borderRadius: const BorderRadius.all(Radius.circular(5)),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black12,
-                        blurRadius: 3,
-                        offset: Offset(5, 5),
-                        spreadRadius:0,
+                        color: ColorTheme.border,
+                        blurRadius: 5,
+                        spreadRadius: 0.2,
+                        offset: const Offset(0, 0),
                       ),
                     ],
                   ),
@@ -276,32 +275,30 @@ class _MenuPopWidgetState extends State<_MenuPopWidget> {
                       children: <Widget>[
                         widget.showArrow
                             ? isInverted
-                                ? ((widget.menus.length) * 50 +
-                                                    _triangleHeight) /
-                                                position.top <
-                                            0.8 &&
-                                        widget.menus.length > 4
-                                    ? Container()
-                                    : CustomPaint(
-                                        size:
-                                            Size(_curPageWidth, _triangleHeight),
-                                        painter: TrianglePainter(
-                                          color: widget.backgroundColor,
-                                          position: position,
-                                          isInverted: true,
-                                          size: widget.button.size,
-                                          screenWidth:
-                                              MediaQuery.of(context).size.width,
-                                        ),
-                                      )
-                                : Container()
+                            ? ((widget.menus.length) * 50) /
+                            position.top <
+                            0.8 &&
+                            widget.menus.length > 4
+                            ? Container()
+                            : CustomPaint(
+                          size: Size(_curPageWidth, _triangleHeight),
+                          painter: TrianglePainter(
+                            color: widget.backgroundColor,
+                            position: position,
+                            isInverted: true,
+                            size: widget.button.size,
+                            screenWidth:
+                            MediaQuery.of(context).size.width,
+                          ),
+                        )
+                            : Container()
                             : Container(),
                         Expanded(
                           child: Stack(
                             children: <Widget>[
                               ClipRRect(
                                 borderRadius:
-                                    BorderRadius.all(Radius.circular(5)),
+                                BorderRadius.all(Radius.circular(5)),
                                 child: Container(
                                   color: widget.backgroundColor,
                                 ),
@@ -319,17 +316,17 @@ class _MenuPopWidgetState extends State<_MenuPopWidget> {
                         ),
                         widget.showArrow
                             ? isInverted
-                                ? Container()
-                                : CustomPaint(
-                                    size: Size(_curPageWidth, _triangleHeight),
-                                    painter: TrianglePainter(
-                                      color: widget.backgroundColor,
-                                      position: position,
-                                      size: widget.button.size,
-                                      screenWidth:
-                                          MediaQuery.of(context).size.width,
-                                    ),
-                                  )
+                            ? Container()
+                            : CustomPaint(
+                          size: Size(_curPageWidth, _triangleHeight),
+                          painter: TrianglePainter(
+                            color: widget.backgroundColor,
+                            position: position,
+                            size: widget.button.size,
+                            screenWidth:
+                            MediaQuery.of(context).size.width,
+                          ),
+                        )
                             : Container(),
                       ],
                     ),
@@ -351,7 +348,7 @@ class _MenuPopWidgetState extends State<_MenuPopWidget> {
       scrollDirection: Axis.vertical,
       itemCount: _curPageChildCount,
       itemBuilder: (BuildContext context, int index) {
-        MenuPopupItem item = widget.menus[_curPage * widget._pageMaxChildCount + index];
+        MenuItem item = widget.menus[_curPage * widget._pageMaxChildCount + index];
         return InkWell(
           onTap: (){
             if (item.onTap != null) {
@@ -609,7 +606,7 @@ class MenuSelect extends StatefulWidget {
   final Color? selectedTextFontColor;
 
   /// 弹出菜单项列表
-  final List<MenuPopupItem> menus;
+  final List<MenuItem> menus;
 
   ///显示箭头标指示，默认三角向下，弹出后显示三角向上
   final bool showArrow;
@@ -660,16 +657,13 @@ class _MenuSelectState extends State<MenuSelect> {
               children: [
                 TextView(widget.text, fontSize: _isShowMenu ? widget.textSelectedFontSize : widget.textFontSize, color: _isShowMenu ? widget.selectedTextFontColor ?? ColorTheme.main : widget.textFontColor),
                 if (widget.showArrow)
-                Container(
-                      margin: const EdgeInsets.only(left: 5),
-                      child: Icon(
-                        _isShowMenu ? widget.arrowIconUp : widget.arrowIcon,
-                        size: _isShowMenu ? widget.arrowIconUpSize : widget.arrowIconSize,
-                        color: _isShowMenu
-                            ? widget.arrowIconUpColor ?? ColorTheme.main
-                            : widget.arrowIconColor ?? ColorTheme.font,
-                      ),
-                    ),
+                Icon(
+                  _isShowMenu ? widget.arrowIconUp : widget.arrowIcon,
+                  size: _isShowMenu ? widget.arrowIconUpSize : widget.arrowIconSize,
+                  color: _isShowMenu
+                      ? widget.arrowIconUpColor ?? ColorTheme.main
+                      : widget.arrowIconColor ?? ColorTheme.font,
+                ),
               ],
             ),
           );

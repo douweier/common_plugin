@@ -23,7 +23,7 @@ class SwitchView extends StatefulWidget {
   final ValueChanged<bool>? onChanged;
 
   @override
-  _SwitchViewState createState() => _SwitchViewState();
+  State<SwitchView> createState() => _SwitchViewState();
 }
 
 class _SwitchViewState extends State<SwitchView> with SingleTickerProviderStateMixin {
@@ -77,7 +77,7 @@ class _SwitchViewState extends State<SwitchView> with SingleTickerProviderStateM
           _onTap();
         },
         onTapDown: (details) => setState(() => _isTouchedOrHovered = true), // 触摸开始时
-        child: Container(
+        child: SizedBox(
           height: widget.trackHeight + 15,
           child: Stack(
             children: [
@@ -99,7 +99,7 @@ class _SwitchViewState extends State<SwitchView> with SingleTickerProviderStateM
                   offset: Offset(_offsetAnimation.value, 0),
                   child: Container(
                     padding:  _isTouchedOrHovered
-                        ? EdgeInsets.all(5)
+                        ? const EdgeInsets.all(5)
                         : EdgeInsets.zero, // 按钮按下时显示边缘透明背景
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,

@@ -1,5 +1,5 @@
 
-import 'package:common_plugin/src/utils/queue_task.dart';
+import 'package:common_plugin/common_plugin.dart';
 import 'package:flutter/material.dart';
 
 
@@ -20,7 +20,7 @@ import 'package:flutter/material.dart';
 class StateValue<T> extends ChangeNotifier {
   T _value;
 
-  static QueueTask _queueTask = QueueTask(); //请求队列调度
+  static final QueueTask _queueTask = QueueTask(); //请求队列调度
 
   StateValue(this._value);
 
@@ -37,7 +37,7 @@ class StateValue<T> extends ChangeNotifier {
         notifyNow();
       }
     } catch (error) {
-      _handleError(error);
+      Logger.error(error,mark: 'StateValue update');
     }
   }
 
@@ -57,8 +57,13 @@ class StateValue<T> extends ChangeNotifier {
     });
   }
 
-  void _handleError(Object error) {
-    debugPrint('Error updating value: $error');
+  /// 等待数据处理，延迟300ms更新
+  void notifyLater() {
+    _queueTask.add(() async {
+      await Future.delayed(const Duration(milliseconds: 300), () {
+        notifyListeners();
+      });
+    });
   }
 }
 
@@ -74,7 +79,7 @@ class StateWidget<T> extends StatefulWidget {
   });
 
   @override
-  _StateWidgetState<T> createState() => _StateWidgetState<T>();
+  State<StateWidget<T>> createState() => _StateWidgetState<T>();
 }
 
 class _StateWidgetState<T> extends State<StateWidget<T>> with AutomaticKeepAliveClientMixin {

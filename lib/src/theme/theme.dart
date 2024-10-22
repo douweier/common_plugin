@@ -16,6 +16,9 @@ class ColorTheme {
   ///字体主要颜色
   static Color font = const Color(0xff333333);
 
+  ///浅黑
+  static Color fontLight = const Color(0xff666666);
+
   ///默认背景颜色
   static Color background = const Color(0xfff5f5f5);
 
@@ -46,11 +49,11 @@ class ColorTheme {
   ///橙色
   static Color orange = const Color(0xfffa7a39);
 
-  ///浅黑
-  static Color lightFont = const Color(0xff666666);
-
   ///灰色
   static Color grey = const Color(0xff999999);
+
+  ///灰色
+  static Color btnBackground = const Color(0xff0066FE);
 
   ///蓝渐变颜色
   static List<Color> lineGradBlue = [
@@ -88,7 +91,14 @@ class TextView extends StatelessWidget {
   final Color? color;
   final double fontSize;
   final FontWeight fontWeight;
+  final bool italic; //是否斜体
+  /// 字间距，如0.5
+  final double? letterSpacing;
+  /// 行间距，例如1.7
+  final double? lineHeight;
+  /// 最大行数，默认1，0不限制
   final int maxLines;
+  /// 标题、昵称简单设置字数长度，就能避免文本溢出的布局问题
   final int maxLength;
   final TextOverflow overflow;
   final bool shadowShow;
@@ -100,6 +110,9 @@ class TextView extends StatelessWidget {
     this.color,
     this.fontSize = 14,
     this.fontWeight = FontWeight.w400,
+    this.italic = false,
+    this.letterSpacing,
+    this.lineHeight,
     this.maxLength = 0,
     this.maxLines = 1,
     this.overflow = TextOverflow.ellipsis,
@@ -112,11 +125,10 @@ class TextView extends StatelessWidget {
   Widget build(BuildContext context) {
     String? truncatedText;
     if (maxLength > 0 && text.length > maxLength) {
-      truncatedText =
-          text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+      truncatedText = text.length > maxLength ? '${text.substring(0, maxLength)}...' : text;
     }
     return RichText(
-      maxLines: maxLines,
+      maxLines: maxLines == 0 ? null : maxLines,
       overflow: overflow,
       text: TextSpan(
         text: icon != null
@@ -128,7 +140,10 @@ class TextView extends StatelessWidget {
           fontSize: fontSize,
           fontWeight: fontWeight,
           fontFamily: icon != null ? 'iconFont' : '',
+          fontStyle: italic ? FontStyle.italic : null,
           decoration: TextDecoration.none,
+          letterSpacing: letterSpacing,
+          height: lineHeight,
           package: icon?.fontPackage,
           shadows: shadowShow
               ? [

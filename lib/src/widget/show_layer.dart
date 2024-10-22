@@ -1,15 +1,19 @@
+import 'package:common_plugin/common_plugin.dart';
 import 'package:common_plugin/src/common/context.dart';
 import 'package:common_plugin/src/theme/icon_text.dart';
 import 'package:common_plugin/src/theme/button.dart';
 import 'package:common_plugin/src/theme/theme.dart';
 import 'package:flutter/material.dart';
 
-
-
 /// 弹出层控制器
 class LayerController {
   static OverlayEntry? overlayEntry;
   static bool isWillPopExitApp = true; //默认开启连续点两次返回退出app
+
+  static bool isShowDialog = false;
+
+  static QueueTask dialogTask =
+      QueueTask(interval: 1500, defaultTaskTimeout: 1);
 
   /// 弹出层
   static show({
@@ -32,7 +36,6 @@ class LayerController {
     bool wllPopExitApp = false,
   }) {
     isWillPopExitApp = wllPopExitApp;
-
 
     context = context ?? contextIndex;
 
@@ -82,7 +85,8 @@ class LayerController {
 
     if (overlayEntry == null) {
       overlayEntry = OverlayEntry(
-          builder: (BuildContext context) => SafeArea(child: _layerWidget));
+          builder: (BuildContext context) =>
+              SafeArea(top: true, bottom: true, child: _layerWidget));
       Overlay.of(context).insert(overlayEntry!);
     }
   }
@@ -129,10 +133,17 @@ showAlert(
   ///窗体外区域颜色
   Color barrierColor = Colors.black45,
 
+  ///边框圆角样式
+  BorderRadius borderRadius = const BorderRadius.only(
+    topLeft: Radius.circular(50.0),
+    topRight: Radius.circular(50.0),
+    bottomLeft: Radius.circular(0),
+    bottomRight: Radius.circular(50.0),
+  ),
+
   ///设置时间多少秒自动关闭窗体，默认一直显示
   int autoCloseTime = 1,
   double? width,
-  double radius = 50.0,
   Color borderColor = const Color(0x4DFFFFFF),
   double borderWidth = 2,
   //barrierDismissible为true在层期间禁用Pop返回
@@ -185,13 +196,8 @@ showAlert(
               vertical: paddingVertical, horizontal: paddingHorizontal),
           decoration: BoxDecoration(
             color: backgroundColor ?? ColorTheme.main.withOpacity(.5),
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(radius),
-              topRight: Radius.circular(radius),
-              bottomLeft: Radius.circular(0),
-              bottomRight: Radius.circular(radius),
-            ),
-            border: new Border.all(color: borderColor, width: borderWidth),
+            borderRadius: borderRadius,
+            border: Border.all(color: borderColor, width: borderWidth),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -233,7 +239,8 @@ Future showDialogLayer({
   bool barrierDismissible = true,
   bool clickBodyClose = false,
   BuildContext? context,
-  Color barrierColor = Colors.black12,
+  bool isOnlyOneShow = false, //是否只显示一个弹窗
+  Color barrierColor = Colors.black26,
 }) async {
   LayerController.isWillPopExitApp = false; //barrierDismissible为true在层期间禁用Pop返回
 
@@ -247,6 +254,7 @@ Future showDialogLayer({
         LayerController.isWillPopExitApp = true;
         _overlayEntry?.remove();
         _overlayEntry = null;
+        LayerController.isShowDialog = false;
       }
     },
     child: Container(
@@ -259,14 +267,15 @@ Future showDialogLayer({
                 LayerController.isWillPopExitApp = true;
                 _overlayEntry?.remove();
                 _overlayEntry = null;
+                LayerController.isShowDialog = false;
               }
             }
           },
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.all(Radius.circular(5)),
+              borderRadius: const BorderRadius.all(Radius.circular(5)),
               color: backgroundColor,
-              boxShadow: [
+              boxShadow: const [
                 BoxShadow(
                     color: Colors.black45,
                     offset: Offset(5, -8),
@@ -275,6 +284,7 @@ Future showDialogLayer({
                     ),
               ],
             ),
+            margin: const EdgeInsets.symmetric(horizontal: 5),
             padding:
                 const EdgeInsets.only(top: 25, bottom: 7, left: 10, right: 10),
             child: Column(
@@ -285,11 +295,11 @@ Future showDialogLayer({
                     padding: const EdgeInsets.only(left: 16, right: 16, top: 0),
                     child: Column(
                       children: [
-                        TextView(title ?? "", color: Color(0xff444444)),
-                        SizedBox(
+                        TextView(title ?? "", color: const Color(0xff444444)),
+                        const SizedBox(
                           height: 5,
                         ),
-                        Divider(),
+                        const Divider(),
                       ],
                     ),
                   ),
@@ -306,18 +316,17 @@ Future showDialogLayer({
                     radius: const Radius.circular(2.0), // 可选，滚动条圆角
                     child: SingleChildScrollView(
                       controller: ScrollController(),
-                      child: child != null
-                          ? child
-                          : TextView(
-                              "${content}",
-                              maxLines: 6,
-                            ),
+                      child: child ??
+                          TextView(
+                            "$content",
+                            fontSize: 16,
+                            maxLines: 100,
+                          ),
                     ),
                   ),
                 ),
                 Container(
-                  padding: EdgeInsets.only(top: 20),
-                  height: 50,
+                  margin: const EdgeInsets.only(top: 50),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
@@ -332,14 +341,16 @@ Future showDialogLayer({
                               LayerController.isWillPopExitApp = true;
                               _overlayEntry?.remove();
                               _overlayEntry = null;
+                              LayerController.isShowDialog = false;
                             }
                           },
                           borderColor: Colors.black12,
                           backgroundColor: Colors.white,
                           fontColor: ColorTheme.font,
+                          showShadow: false,
                           fontSize: 14,
                           width: 120,
-                          height: 38,
+                          height: 36,
                         ),
                       ButtonView(
                         text: ok,
@@ -348,6 +359,7 @@ Future showDialogLayer({
                             LayerController.isWillPopExitApp = true;
                             _overlayEntry?.remove();
                             _overlayEntry = null;
+                            LayerController.isShowDialog = false;
                           }
                           if (onOkCallBack != null) {
                             onOkCallBack.call();
@@ -360,7 +372,7 @@ Future showDialogLayer({
                             type == 2 ? Colors.black12 : Colors.transparent,
                         fontColor: type == 2 ? Colors.red : Colors.white,
                         width: 120,
-                        height: 38,
+                        height: 35,
                       )
                     ],
                   ),
@@ -377,7 +389,16 @@ Future showDialogLayer({
     _overlayEntry = OverlayEntry(
         builder: (BuildContext context) => Material(
             color: Colors.transparent, child: SafeArea(child: _layerWidget)));
-    Overlay.of(context).insert(_overlayEntry!);
+    if (isOnlyOneShow) {
+      LayerController.dialogTask.add(() {
+        if (!LayerController.isShowDialog) {
+          Overlay.of(context ?? contextIndex).insert(_overlayEntry!);
+        }
+        LayerController.isShowDialog = true;
+      });
+    } else {
+      Overlay.of(context).insert(_overlayEntry!);
+    }
   }
 }
 
@@ -423,8 +444,8 @@ class ShowDragLayer {
 
     remove();
     //创建一个OverlayEntry对象
-    OverlayEntry overlayEntry = new OverlayEntry(builder: (context) {
-      return new Positioned(
+    OverlayEntry overlayEntry = OverlayEntry(builder: (context) {
+      return Positioned(
           top: top ?? MediaQuery.of(context).size.height * 0.3,
           left: 10,
           child: _buildDraggable(context));
@@ -438,7 +459,7 @@ class ShowDragLayer {
   }
 
   static _buildDraggable(context) {
-    return new Draggable(
+    return Draggable(
       ///默认释放状态显示Widget
       child: Material(
         color: Colors.transparent,
@@ -500,7 +521,7 @@ class ShowDragLayer {
         isLeft = false;
       }
 
-      double maxY = MediaQuery.of(context).size.height - 500;
+      double maxY = MediaQuery.of(context).size.height - 300;
 
       return Positioned(
           top: (offset.dy < 70

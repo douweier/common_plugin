@@ -1,18 +1,26 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:common_plugin/src/common/function.dart';
+import 'package:common_plugin/common_plugin.dart';
 import 'package:common_plugin/src/utils/float_task_progress.dart';
-import 'package:common_plugin/src/widget/show_layer.dart';
 import 'package:dio/dio.dart';
 
 Future downLoadFile(
-  String url,
-{
+  String url, {
   String? savePath, //保存路径，包含文件名
-  void Function(int received, int total)? onReceiveProgress,
+  void Function(int received, int total)? onReceiveProgress, //进度回调
   bool isShowProgress = true,
-}
-) async {
+  bool isMastDownload = false,
+  bool isInstall = false,
+}) async {
+  //获取权限
+  if (!await PermissionUtils.storage()) {
+    showAlert('需要存储权限才能保存');
+    return;
+  }
+  if (isInstall) {
+    await PermissionUtils.installPackages();
+  }
+
   if (savePath == null) {
     //根据url获取文件名
     var fileName = url.split("/").last;
@@ -21,22 +29,29 @@ Future downLoadFile(
     if (fileName.isEmpty) {
       fileName = "file_${DateTime.now().millisecondsSinceEpoch}"; //随机生成文件名
     }
-    savePath = await getPathDownload() + "/" + fileName;
+    savePath = "${await getPathDownload()}/$fileName";
   }
-  ShowDragLayer.show(child: DownloadTaskProgress());
+  if (isShowProgress) {
+    ShowDragLayer.show(
+        child: DownloadTaskProgress(
+      isMastDownload: isMastDownload,
+      isInstall: isInstall,
+    ));
+  }
   await DownloadManage.download(
     url,
-    savePath!,
+    savePath,
     onReceiveProgress: onReceiveProgress,
   );
 }
 
 class DownloadManage {
   /// 用于记录下载的url，避免重复下载
-  static var downloadingUrls = Map<String, CancelToken>();
+  static var downloadingUrls = <String, CancelToken>{};
 
   /// 当前正在下载Url
   static String currentDownloadUrl = '';
+
   ///文件大小
   static int fileSize = 1;
 
@@ -55,12 +70,11 @@ class DownloadManage {
   ///文件保存路径
   static String? fileSavePath;
 
-
   /// 断点下载大文件
   static Future<void> download(
     String url,
     String savePath, {
-      void Function(int received, int total)? onReceiveProgress,
+    void Function(int received, int total)? onReceiveProgress,
     void Function(DioException)? failed,
   }) async {
     int downloadStart = 0;
@@ -77,19 +91,13 @@ class DownloadManage {
     if (await f.exists()) {
       downloadStart = f.lengthSync();
       fileExists = true;
-       f.deleteSync();
+      f.deleteSync();
     }
 
-
-
-    print("开始：$downloadStart");
     if (fileExists && downloadingUrls.containsKey(url)) {
       if (state != 2) {
         f.delete();
       }
-      // else {
-      //   return;
-      // }
     }
     var dio = Dio();
     CancelToken cancelToken = CancelToken();
@@ -110,10 +118,12 @@ class DownloadManage {
         ),
         onReceiveProgress: (received, total) {
           if (total != -1) {
-            receiveSize = (received~/1024~/1024).toInt();
-            fileSize = (total~/1024~/1024).toInt();
-            if (fileSize<1){fileSize=1;}
-            if (received==total){
+            receiveSize = (received ~/ 1024 ~/ 1024).toInt();
+            fileSize = (total ~/ 1024 ~/ 1024).toInt();
+            if (fileSize < 1) {
+              fileSize = 1;
+            }
+            if (received == total) {
               state = 2;
               downloadingUrls.remove(url);
             } else {
@@ -129,17 +139,19 @@ class DownloadManage {
       });
     } on DioException catch (error) {
       /// 请求已发出，服务器用状态代码响应它不在200的范围内
+      Logger.error("下载失败: ${error.message}", mark: "download");
       if (CancelToken.isCancel(error)) {
         state = 0;
-        print("下载取消");
       } else {
         state = 3;
         failed?.call(error);
       }
       downloadingUrls.remove(url);
+    } catch (e) {
+      Logger.error("下载失败: $e", mark: "download");
+      state = 3;
     }
   }
-
 
   /// 取消下载任务
   static Future<void> cancelDownload({String? url}) async {

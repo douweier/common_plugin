@@ -1,12 +1,13 @@
 import 'dart:async';
+import 'package:common_plugin/common_plugin.dart';
 import 'package:sqflite/sqflite.dart';
-
 
 /// 数据库管理
 class Sql {
   static Database? database;
   static List<String> _createData = [];
   static List<String> _indexData = [];
+  static QueueTask queueTask = QueueTask(defaultTaskTimeout: 10); // 数据库请求调度，以避免瞬间高并发调用导致一切判断失效造成IO混乱。
 
   /// 初始化
   static Future<Database> init({
@@ -24,55 +25,61 @@ class Sql {
 
     ///数据库版本
     int version = 1,
-
-     Function(int version)? onCreate,
+    Function(int version)? onCreate,
 
     ///数据库升级事件，新版本版本大于旧版本时执行
-     Function(int oldVersion, int newVersion)? onUpgrade,
+    Function(int oldVersion, int newVersion)? onUpgrade,
 
     ///数据库降级事件
-     Function(int oldVersion, int newVersion)? onDowngrade,
+    Function(int oldVersion, int newVersion)? onDowngrade,
 
     ///数据库配置事件，最先执行
-     Function()? onConfigure,
+    Function()? onConfigure,
 
     ///数据库每次打开事件
-     Function()? onOpen,
-
+    Function()? onOpen,
   }) async {
-    try {
-      String _dataName = '';
-      if (changeData) {
-        if (database != null) {
-          await close();
+    return await queueTask.add(() async {
+      try {
+        String dataName = '';
+        if (changeData) {
+          if (database != null) {
+            await close();
+          }
+          if (userId != null) {
+            dataName = userId;
+          }
         }
-        if (userId != null) {
-          _dataName = userId;
+        var path = await getDatabasesPath();
+        if (database == null) {
+          _createData = createData ?? [];
+          _indexData = indexData ?? [];
+          database = await openDatabase(
+            '$path/data$dataName.db',
+            version: version,
+            singleInstance: true, // 默认true，如果为false，则多个实例可以同时打开数据库
+            onCreate: _onCreate,
+            onUpgrade: (db, oldVersion, newVersion) {
+              onUpgrade?.call(oldVersion, newVersion);
+            },
+            onDowngrade: (db, oldVersion, newVersion) {
+              onDowngrade?.call(oldVersion, newVersion);
+            },
+            onConfigure: (db) {
+              onConfigure?.call();
+            },
+            onOpen: (db) async {
+              onOpen?.call();
+            },
+          );
+          return database!;
         }
-      } else {}
-      var path = await getDatabasesPath();
-      if (database == null) {
-        _createData = createData ?? [];
-        _indexData = indexData ?? [];
-        database = await openDatabase(
-          '$path/data$_dataName.db',
-          version: version,
-          singleInstance: true, // 默认true，如果为false，则多个实例可以同时打开数据库
-          onCreate: _onCreate,
-          onUpgrade: (db, oldVersion, newVersion){onUpgrade?.call(oldVersion, newVersion);},
-          onDowngrade: (db, oldVersion, newVersion){onDowngrade?.call(oldVersion, newVersion);},
-          onConfigure: (db){onConfigure?.call();},
-          onOpen: (db) async {
-            onOpen?.call();},
-        );
-        return database!;
+      } catch (e) {
+        await close();
+        Logger.error("数据库初始化失败: $e", mark: "Sql-init");
       }
-
-    }catch(e){
-      await close();
-      return Future.error(e);
-    }
-    return database!;
+      return database!;
+    },isAddToFirst: true);
   }
 
   /// 数据库创建事件
@@ -122,13 +129,11 @@ class Sql {
     });
   }
 
-
-    /// 删除数据库文件
+  /// 删除数据库文件
   static Future deleteData(dynamic userId) async {
     var path = await getDatabasesPath();
     return await deleteDatabase('$path/data${userId ?? ''}.db');
   }
-
 
   /// 判断数据库表是否存在
   static Future<bool> isTableExists(String table) async {
@@ -141,21 +146,26 @@ class Sql {
 
   /// 关闭数据库
   static Future<void> close() async {
-    await database?.close();
-    database = null;
+     await queueTask.add(() async {
+      await database?.close();
+      database = null;
+    });
   }
 
   /// 自动根据搜索条件查找指定表，如果存在则更新，不存在则插入,
   /// where: "userID = '$userID'"
-  static Future<bool> saveDataAuto({required String table,required Map<String, Object?> value, required String where}) async {
+  static Future<bool> saveDataAuto(
+      {required String table,
+      required Map<String, Object?> value,
+      required String where}) async {
     database = await init();
     if (await isTableExists(table)) {
-      var _value = await query(table, where: where);
+      var value0 = await query(table, where: where);
 
-      if (_value == null) {
-         await database?.insert(table, value);
+      if (value0 == null) {
+        await database?.insert(table, value);
       } else {
-         await database?.update(table, value, where: where);
+        await database?.update(table, value, where: where);
       }
       return true;
     } else {
@@ -164,24 +174,24 @@ class Sql {
   }
 
   /// 自动键值对保存数据
-  static Future savekeyData(String key, String value) async {
+  static Future saveKeyData(String key, String value) async {
     database = await init();
-    var _value = await query('keydata', where: 'name = "${key}"');
-    var _list = {
+    var value0 = await query('keydata', where: 'name = "$key"');
+    var list = {
       'name': key,
       'value': value,
       'addTime': DateTime.now().millisecondsSinceEpoch,
     };
-    if (_value == null) {
-      return await database?.insert("keydata", _list);
+    if (value0 == null) {
+      return await database?.insert("keydata", list);
     } else {
-      return await database?.update("keydata", _list, where: 'name = "${key}"');
+      return await database?.update("keydata", list, where: 'name = "$key"');
     }
   }
 
   /// 获取键值对数据
-  static Future getkeyData(String key) async {
-    var value = await query('keydata', where: 'name = "${key}"');
+  static Future getKeyData(String key) async {
+    var value = await query('keydata', where: 'name = "$key"');
     if (value != null) {
       return value['value'];
     } else {
@@ -196,12 +206,13 @@ class Sql {
   }
 
   /// 插入多条数据
-  static Future<List<dynamic>> insertList(String table, List<Map<String, Object?>> value) async {
+  static Future<List<dynamic>> insertList(
+      String table, List<Map<String, Object?>> value) async {
     database = await init();
     var batch = database?.batch();
-      value.forEach((element) {
-        batch?.insert(table, element);
-      });
+    for (var element in value) {
+      batch?.insert(table, element);
+    }
 
     return await batch!.commit();
   }
@@ -209,11 +220,15 @@ class Sql {
   /// 更新单条数据,
   /// where: "userID = '${widget.userID}'"
   static Future<int> update(
-      {required String table, required Map<String, Object?> value, required String where}) async {
+      {required String table,
+      required Map<String, Object?> value,
+      required String where}) async {
     database = await init();
-    if (where.contains('"')){ //将双引号替换为单引号
+    if (where.contains('"')) {
+      //将双引号替换为单引号
       where = where.replaceAll('"', "'");
-    } else if (!where.contains("'")) { //不含单引号则添加
+    } else if (!where.contains("'")) {
+      //不含单引号则添加
       if (where != '1=1') {
         final parts = where.split('=');
         final variableName = parts.last.trim();
@@ -223,39 +238,64 @@ class Sql {
     return await database!.update(table, value, where: where);
   }
 
-  /// 查询数量
+  /// 查询数据条数
   static Future<int> count(String table) async {
     database = await init();
-    var _nums = Sqflite.firstIntValue(await database!.rawQuery('SELECT COUNT(*) FROM $table'));
-    return _nums ?? 0;
+    var rowCount = Sqflite.firstIntValue(
+        await database!.rawQuery('SELECT COUNT(*) FROM $table'));
+    return rowCount ?? 0;
   }
 
   /// 统计字段累计数
   static Future<int> allCount(String table, String field,
       {String where = ''}) async {
     database = await init();
-    if (where.isNotEmpty){
+    if (where.isNotEmpty) {
       where = ' WHERE $where';
     }
-    final result = Sqflite.firstIntValue(await database!.rawQuery('SELECT SUM($field) FROM $table $where'));
+    final result = Sqflite.firstIntValue(
+        await database!.rawQuery('SELECT SUM($field) FROM $table $where'));
     return result ?? 0;
   }
 
   /// 检索单条数据
   /// where: "userID = '${widget.userID}'"，参数部分必须包含单引号，不能双引号
   /// field,不为空就直接返回该字段数据
-  static Future query(String table, {String? where, String? field,int limit = 1,bool? distinct,   List<String>? columns,List<Object?>? whereArgs,   String? groupBy,   String? having,   String? orderBy,   int? offset,}) async {
+  static Future query(
+    String table, {
+    String? where,
+    String? field,
+    int limit = 1,
+    bool? distinct,
+    List<String>? columns,
+    List<Object?>? whereArgs,
+    String? groupBy,
+    String? having,
+    String? orderBy,
+    int? offset,
+  }) async {
     database = await init();
     if (where != null) {
-      if (where.contains('"')){ //将双引号替换为单引号
+      if (where.contains('"')) {
+        //将双引号替换为单引号
         where = where.replaceAll('"', "'");
-      } else if (!where.contains("'")) { //不含单引号则添加
+      } else if (!where.contains("'")) {
+        //不含单引号则添加
         final parts = where.split('=');
         final variableName = parts.last.trim();
         where = '${parts.first} = \'$variableName\'';
       }
     }
-    var maps = await database!.query(table, where: where, limit: limit, columns: columns, whereArgs: whereArgs, groupBy: groupBy, having: having, orderBy: orderBy, offset: offset, distinct: distinct);
+    var maps = await database!.query(table,
+        where: where,
+        limit: limit,
+        columns: columns,
+        whereArgs: whereArgs,
+        groupBy: groupBy,
+        having: having,
+        orderBy: orderBy,
+        offset: offset,
+        distinct: distinct);
     if (maps.length == 1) {
       var json = maps.first;
       return field != null ? json[field] : json;
@@ -295,8 +335,8 @@ class Sql {
   /// 删除单条数据
   static Future<int> delete(String table, {List? ids, String? where}) async {
     database = await init();
-    return await database!.delete(table,
-        where: where ?? 'id = ?', whereArgs: ids);
+    return await database!
+        .delete(table, where: where ?? 'id = ?', whereArgs: ids);
   }
 
   /// 删除所有数据

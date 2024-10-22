@@ -1,12 +1,15 @@
 import 'package:common_plugin/common_plugin.dart';
 import 'package:flutter/material.dart';
 
-class ButtonView extends StatelessWidget {
-  ///封装按钮
+class ButtonView extends StatefulWidget {
   ///自动根据字数计算按钮宽高间距,如果存在child则text和image无效
-  ButtonView({
+  const ButtonView({
+    super.key,
     this.text,
     this.isOutLineButton = false,
+    this.isDisable = false,
+    this.isDisableFastClick = true,
+    this.fastClickTime = 800,
     this.icon,
     this.image,
     this.child,
@@ -32,6 +35,11 @@ class ButtonView extends StatelessWidget {
 
   ///outLineButton=true为边框轮廓按钮，false默认蓝色主题背景按钮
   final bool isOutLineButton;
+
+  /// 是否禁用按钮
+  final bool isDisable;
+  final bool isDisableFastClick; //禁用快速点击
+  final int fastClickTime; //单位毫秒,800毫秒内不可重复点击
   final Widget? child;
   final VoidCallback? onPressed;
   final Function()? onLongPress;
@@ -60,35 +68,73 @@ class ButtonView extends StatelessWidget {
   final LinearGradient? gradientColors;
 
   @override
-  Widget build(BuildContext context) {
+  State<ButtonView> createState() => _ButtonViewState();
+}
 
+class _ButtonViewState extends State<ButtonView> {
+  bool isDisableClick = false;
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  void _onPressed() async {
+    if (widget.isDisableFastClick) {
+      setState(() {
+        isDisableClick = true;
+      });
+      widget.onPressed?.call();
+      Future.delayed(Duration(milliseconds: widget.fastClickTime), () {
+        if (mounted) {
+          setState(() {
+            isDisableClick = false;
+          });
+        }
+      });
+    } else {
+      widget.onPressed?.call();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onPressed,
-      onLongPress: onLongPress,
+      onTap: (widget.isDisable || isDisableClick) ? (){} : _onPressed,
+      onLongPress: widget.onLongPress,
       behavior: HitTestBehavior.opaque,
       child: Container(
           alignment: Alignment.center,
-          width: width,
-          height: height,
-          padding: padding ?? ((icon != null && text == null) ? EdgeInsets.all(10) : EdgeInsets.symmetric(vertical: 5,horizontal: 15)),
-          margin: margin,
+          width: widget.width,
+          height: widget.height,
+          padding: widget.padding ??
+              ((widget.icon != null && widget.text == null)
+                  ? const EdgeInsets.all(10)
+                  : const EdgeInsets.symmetric(vertical: 5, horizontal: 15)),
+          margin: widget.margin,
           decoration: BoxDecoration(
-            color: gradientColors == null
-                ? (isOutLineButton
-                    ? Colors.white
-                    : (backgroundColor ??
-                        (child != null ? null : ColorTheme.main)))
+            color: widget.gradientColors == null
+                ? (widget.isDisable
+                    ? ColorTheme.background
+                    : widget.isOutLineButton
+                        ? Colors.white
+                        : (widget.backgroundColor ??
+                            (widget.child != null ? null : ColorTheme.main)))
                 : null,
-            borderRadius: BorderRadius.circular(borderRadius ?? 0),
+            borderRadius: BorderRadius.circular(widget.borderRadius ?? 0),
             border: Border.fromBorderSide(BorderSide(
-                color: borderColor ??
-                    (isOutLineButton ? ColorTheme.border : Colors.transparent),
+                color: widget.isDisable
+                    ? ColorTheme.border
+                    : (widget.borderColor ??
+                        (widget.isOutLineButton
+                            ? ColorTheme.border
+                            : Colors.transparent)),
                 width: 1)),
-            gradient: gradientColors,
-            boxShadow: !showShadow
+            gradient: widget.gradientColors,
+            boxShadow: (!widget.showShadow || widget.isOutLineButton)
                 ? []
                 : [
-                    BoxShadow(
+                    const BoxShadow(
                         color: Colors.black12,
                         offset: Offset(1, -1),
                         blurRadius: 1.0, //阴影模糊程度
@@ -99,72 +145,45 @@ class ButtonView extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              if (child != null) child!,
-              if (image != null && child == null)
+              if (widget.child != null) widget.child!,
+              if (widget.image != null && widget.child == null)
                 Padding(
                   padding: const EdgeInsets.only(right: 5.0),
                   child: Image.asset(
-                    image!,
-                    color: fontColor ?? (isOutLineButton ? ColorTheme.font : ColorTheme.white),
+                    widget.image!,
+                    color: widget.fontColor ??
+                        (widget.isOutLineButton
+                            ? ColorTheme.font
+                            : ColorTheme.white),
                     fit: BoxFit.cover,
-                    width: height != null ? height! * 0.5 : 15,
-                    height: height != null ? height! * 0.5 : 15,
+                    width: widget.height != null ? widget.height! * 0.5 : 15,
+                    height: widget.height != null ? widget.height! * 0.5 : 15,
                   ),
                 ),
-              if (icon != null && child == null)
+              if (widget.icon != null && widget.child == null)
                 Padding(
-                  padding: EdgeInsets.only(right: (text != null) ? 5.0 : 0),
-                  child: icon,
+                  padding:
+                      EdgeInsets.only(right: (widget.text != null) ? 5.0 : 0),
+                  child: widget.icon,
                 ),
-              if (text != null && child == null)
-                Container(
+              if (widget.text != null && widget.child == null)
+                isDisableClick ? LoadingPage(onlyShowIcon: true,iconSize: widget.fontSize,showAppScaffold: false,) : Container(
                   constraints: BoxConstraints(
                     maxWidth: screenSize.width * 0.9,
                   ),
                   child: TextView(
-                    text!,
-                    color: fontColor ?? (isOutLineButton ? ColorTheme.font : ColorTheme.white),
-                    fontSize: fontSize,
-                    fontWeight: fontWeight,
+                    widget.text!,
+                    color: widget.isDisable
+                        ? ColorTheme.grey
+                        : (widget.fontColor ??
+                            (widget.isOutLineButton
+                                ? ColorTheme.font
+                                : ColorTheme.white)),
+                    fontSize: widget.fontSize,
+                    fontWeight: widget.fontWeight,
                   ),
                 ),
             ],
-          )),
-    );
-  }
-
-  ///渐变按钮
-  static Widget gradient(String text,
-      {Color? fontColor,
-      double? fontSize,
-      FontWeight? fontWeight,
-      Function()? onTap,
-      Function()? onLongPress,
-      double? width,
-      double? height,
-      EdgeInsetsGeometry? padding,
-      Color? backgroundColor,
-      double? borderRadius,
-      Color? colorLeft,
-      Color? colorRight}) {
-    return InkWell(
-      onTap: onTap,
-      onLongPress: onLongPress,
-      child: Container(
-          alignment: Alignment.center,
-          width: width ?? (15.0 * (text.length + 2)),
-          height: height ?? (25.0 + (text.length + 2)),
-          padding: padding ?? EdgeInsets.only(bottom: 2),
-          decoration: BoxDecoration(
-            color: backgroundColor,
-            borderRadius: BorderRadius.circular(borderRadius ?? 50), //圆角
-            gradient: (colorLeft != null && colorRight != null)
-                ? LinearGradient(colors: [colorLeft, colorRight])
-                : LinearGradient(colors: ColorTheme.lineGradBlue),
-          ),
-          child: TextView(
-            text,
-            color: fontColor ?? Colors.white,
           )),
     );
   }
@@ -172,27 +191,49 @@ class ButtonView extends StatelessWidget {
 
 class ButtonBack extends StatelessWidget {
   const ButtonBack(
-      {Key? key,
-      this.color,
+      {super.key,
+      this.iconColor,
+      this.isWhiteBackground = false,
+      this.backgroundColor,
       this.onPressed,
-      this.size = 24,
-      this.shadowShow = true})
-      : super(key: key);
+      this.size = 22,
+      this.showRoundBackground = false,
+      this.shadowShow = false});
 
-  final Color? color;
+  final Color? iconColor;
+  final bool isWhiteBackground; // 背景是否为白色，默认为黑色背景白色图标
+  final Color? backgroundColor;
 
   final VoidCallback? onPressed;
   final double size;
   final bool shadowShow;
+  final bool showRoundBackground;
 
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      icon: IconText(
-        Icons.arrow_back_ios_rounded,
-        size: size,
-        color: color ?? ColorTheme.white,
-        shadowShow: shadowShow,
+      icon: Container(
+        padding: const EdgeInsets.all(7),
+        decoration: showRoundBackground
+            ? BoxDecoration(
+                color: backgroundColor ?? (isWhiteBackground ? ColorTheme.white : Colors.black54),
+                borderRadius: BorderRadius.circular(50),
+                boxShadow: isWhiteBackground ? const [
+                  BoxShadow(
+                      color: Colors.grey,
+                      offset: Offset(1, 1),
+                      blurRadius: 1.0,
+                      spreadRadius: 0.1
+                      ),
+                ] : [],
+              )
+            : null,
+        child: IconText(
+          Icons.arrow_back_ios_rounded,
+          size: size,
+          color: iconColor ?? (showRoundBackground ? (isWhiteBackground ? ColorTheme.font : ColorTheme.white) : ColorTheme.fontLight),
+          shadowShow: shadowShow,
+        ),
       ),
       onPressed: () {
         if (onPressed != null) {
@@ -206,23 +247,25 @@ class ButtonBack extends StatelessWidget {
 }
 
 class ButtonIcon extends StatelessWidget {
-  const ButtonIcon(this.icon,
-      {Key? key,
+  const ButtonIcon(
+      {super.key,
+      this.icon,
+      this.iconWidget,
       this.color,
       this.backgroundColor,
       this.showBackgroundColor = true,
       this.onTap,
       this.iconSize = 24,
-      this.iconPadding = const EdgeInsets.all(15),
+      this.iconPadding = const EdgeInsets.all(7),
       this.iconMargin,
       this.text,
       this.fontColor,
       this.fontSize = 14,
-      this.shadowShow = true,
-      this.shadowColor = Colors.black54})
-      : super(key: key);
+      this.shadowShow = false,
+      this.shadowColor = Colors.black54});
 
-  final IconData icon;
+  final IconData? icon;
+  final Widget? iconWidget;
   final Color? color;
   final Color? backgroundColor;
   final EdgeInsetsGeometry iconPadding;
@@ -239,27 +282,31 @@ class ButtonIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
       child: Column(
         children: [
-          Container(
-            margin: iconMargin ??
-                (text != null ? const EdgeInsets.only(bottom: 10) : null),
-            padding: showBackgroundColor ? iconPadding : null,
-            decoration: BoxDecoration(
-              color: backgroundColor ??
-                  (showBackgroundColor ? ColorTheme.white.withOpacity(0.2) : null),
-              borderRadius: BorderRadius.circular(50),
-            ),
-            child: IconText(
-              icon,
-              color: color ?? ColorTheme.white,
-              size: iconSize,
-              shadowShow: shadowShow,
-              shadowColor: shadowColor,
-            ),
-          ),
+          iconWidget != null
+              ? iconWidget!
+              : Container(
+                  margin: iconMargin ??
+                      (text != null ? const EdgeInsets.only(bottom: 10) : null),
+                  padding: showBackgroundColor ? iconPadding : null,
+                  decoration: BoxDecoration(
+                    color: backgroundColor ??
+                        (showBackgroundColor
+                            ? ColorTheme.white.withOpacity(0.2)
+                            : null),
+                    borderRadius: BorderRadius.circular(50),
+                  ),
+                  child: IconText(
+                    icon!,
+                    color: color ?? ColorTheme.white,
+                    size: iconSize,
+                    shadowShow: shadowShow,
+                    shadowColor: shadowColor,
+                  ),
+                ),
           if (text != null)
             TextView(
               text!,

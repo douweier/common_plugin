@@ -9,19 +9,19 @@ import 'package:common_plugin/common_plugin.dart';
 
 /// 下载进度条
 class DownloadTaskProgress extends StatefulWidget {
-  DownloadTaskProgress();
+  final bool isMastDownload; //是否强制下载,不能取消
+  final bool isInstall; //是否是安装包
+  const DownloadTaskProgress({super.key, this.isMastDownload = false, this.isInstall = false});
 
   @override
-  State<StatefulWidget> createState() {
-    return DownloadTaskProgressState();
-  }
+  State<DownloadTaskProgress> createState() => _DownloadTaskProgressState();
 }
 
-class DownloadTaskProgressState extends State<DownloadTaskProgress> {
+class _DownloadTaskProgressState extends State<DownloadTaskProgress> {
   late ProgressBackPainter painter;
 
   //静止状态下的offset
-  Offset idleOffset = Offset(0, 60);
+  Offset idleOffset = const Offset(0, 60);
 
   //本次移动的offset
   Offset moveOffset = const Offset(0, 60);
@@ -29,7 +29,7 @@ class DownloadTaskProgressState extends State<DownloadTaskProgress> {
   //最后一次down事件的offset
   Offset lastStartOffset = const Offset(0, 0);
 
-  late Timer? _timer;
+  Timer? _timer;
 
   ///下载进度
   double progressValue = 0;
@@ -75,7 +75,7 @@ class DownloadTaskProgressState extends State<DownloadTaskProgress> {
     painter = ProgressBackPainter();
 
     if (DownloadManage.state == 1 && !stopTask) {
-      _timer = Timer.periodic(Duration(seconds: 1), (timer) async {
+      _timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
         useTime++;
 
         if (stopTask || DownloadManage.state != 1) {
@@ -107,7 +107,7 @@ class DownloadTaskProgressState extends State<DownloadTaskProgress> {
     if (mounted) {
       setState(() {});
     }
-    Future.delayed(Duration(seconds: 10), () {
+    Future.delayed(const Duration(seconds: 10), () {
       remind = false;
       if (mounted) {
         setState(() {});
@@ -252,7 +252,8 @@ class DownloadTaskProgressState extends State<DownloadTaskProgress> {
                   ),
                   Container(
                     decoration: BoxDecoration(
-                      border: Border.all(color: ColorTheme.grey.withOpacity(.3)),
+                      border:
+                          Border.all(color: ColorTheme.grey.withOpacity(.3)),
                       color: ColorTheme.grey.withOpacity(.3),
                       borderRadius: BorderRadius.circular(50),
                     ),
@@ -261,7 +262,8 @@ class DownloadTaskProgressState extends State<DownloadTaskProgress> {
                       child: LinearProgressIndicator(
                         backgroundColor: Colors.grey[200]?.withOpacity(0.5),
                         color: ColorTheme.green,
-                        valueColor: AlwaysStoppedAnimation(ColorTheme.mainLight),
+                        valueColor:
+                            AlwaysStoppedAnimation(ColorTheme.mainLight),
                         value: progressValue,
                         minHeight: 18,
                       ),
@@ -303,20 +305,21 @@ class DownloadTaskProgressState extends State<DownloadTaskProgress> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  ButtonView(
-                    text: "取消下载",
-                    onPressed: () {
-                      DownloadManage.cancelDownload();
-                      _timer?.cancel();
-                      ShowDragLayer.remove();
-                    },
-                    borderColor: Colors.black12,
-                    backgroundColor: Colors.white,
-                    fontColor: ColorTheme.font,
-                    fontSize: 14,
-                    width: 120,
-                    height: 38,
-                  ),
+                  if (!widget.isMastDownload)
+                    ButtonView(
+                      text: "取消下载",
+                      onPressed: () {
+                        DownloadManage.cancelDownload();
+                        _timer?.cancel();
+                        ShowDragLayer.remove();
+                      },
+                      borderColor: Colors.black12,
+                      backgroundColor: Colors.white,
+                      fontColor: ColorTheme.font,
+                      fontSize: 14,
+                      width: 120,
+                      height: 38,
+                    ),
                   ButtonView(
                     text: '缩小窗口',
                     fontColor: ColorTheme.white,
@@ -379,7 +382,7 @@ class DownloadTaskProgressState extends State<DownloadTaskProgress> {
               ),
             ),
             Container(
-              padding: EdgeInsets.only(
+              padding: const EdgeInsets.only(
                 right: 10,
                 left: 10,
                 top: 10,
@@ -390,22 +393,23 @@ class DownloadTaskProgressState extends State<DownloadTaskProgress> {
                     DownloadManage.state == 2
                         ? Icons.file_download_done_rounded
                         : Icons.error_outline_outlined,
-                    color:
-                        DownloadManage.state == 2 ? ColorTheme.green : ColorTheme.red,
+                    color: DownloadManage.state == 2
+                        ? ColorTheme.green
+                        : ColorTheme.red,
                     shadowShow: false,
                     size: 50,
                   ),
-                  SizedBox(
+                  const SizedBox(
                     height: 10,
                   ),
-                  Container(
-                    child: TextView(
-                      DownloadManage.state == 2 ? "下载完成了，是否需要安装" : "呀，下载失败了",
-                      maxLines: 3,
-                      fontSize: 16,
-                    ),
+                  TextView(
+                    DownloadManage.state == 2
+                        ? (widget.isMastDownload ? "下载完成啦" : "下载完成了，是否需要${widget.isInstall ? "更新" : "打开"}")
+                        : "呀，下载失败了",
+                    maxLines: 3,
+                    fontSize: 16,
                   ),
-                  SizedBox(
+                  const SizedBox(
                     height: 10,
                   ),
                 ],
@@ -416,7 +420,7 @@ class DownloadTaskProgressState extends State<DownloadTaskProgress> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  if (DownloadManage.state == 2)
+                  if (DownloadManage.state == 2 && !widget.isMastDownload)
                     ButtonView(
                       text: "不用了",
                       onPressed: () {
@@ -432,7 +436,7 @@ class DownloadTaskProgressState extends State<DownloadTaskProgress> {
                       height: 38,
                     ),
                   ButtonView(
-                    text: DownloadManage.state == 2 ? '马上打开' : "知道了",
+                    text: DownloadManage.state == 2 ? '立即${widget.isInstall ? "更新" : "打开"}' : "知道了",
                     fontColor: ColorTheme.white,
                     onPressed: () async {
                       if (DownloadManage.state == 2) {

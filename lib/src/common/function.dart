@@ -1,10 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:developer';
 import 'dart:io';
 
 import 'package:common_plugin/common_plugin.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import "package:intl/intl.dart";
 import 'package:path_provider/path_provider.dart';
@@ -15,67 +13,92 @@ bool isEmptyOrNull(dynamic value) {
     return true;
   }
 
-  if (value is String || value is List || value is Map) {
+  if (value is String && value.trim().isEmpty) {
+    return true;
+  }
+
+  if (value is List || value is Map) {
     return value.isEmpty;
   }
 
   return false;
 }
 
-/// 间接等待数据获取成功，用于内部未知造成直接返回null的情况
-///等待条件或操作成功才执行后续代码，避免空数据导致报错
-///检查条件满足不为null、false跳出循环等待，直接返回数据，超时30秒跳出
+
+///   循环检查变量值直到条件满足不为null、false跳出循环等待，直接返回数据，超时30秒跳出
 ///    dynamic value;
 ///    中间这里为数据获取逻辑
-///    result = await awaitDataSuccess((){return value;},timeout:30);
+///    result = await awaitWhileSuccess((){return value;},timeout:30); // 注意return内不能直接放方法，不然多次执行，必须为数据值
 ///
-Future<dynamic> awaitSuccess(
-  Function valueReturn, {
+Future<T> awaitWhileSuccess<T>(
+ T Function() valueReturn, {
   int timeout = 30,
   int waitTimeShowLading = 300, // 毫秒，超过指定时间显示加载动画
+  bool showLoading = true, // 是否显示加载动画
 }) async {
   int count = 0;
   final maxCount = timeout * 40; // 换算超时的循环次数
   dynamic result;
-  late Timer timer;
-  timer = Timer(Duration(milliseconds: waitTimeShowLading), () {
-    ShowOverScreen.show(
-        LoadingPage(
-          onlyShowIcon: true,
-          showAppScaffold: false,
-        ),
-        autoCloseTime: timeout);
-  });
-  await Future.doWhile(() async {
-    result = valueReturn();
-    if (result != null && result != false) {
+  Timer? timer;
+  if (showLoading) {
+    timer = Timer(Duration(milliseconds: waitTimeShowLading), () {
+      ShowOverScreen.show(
+          const LoadingPage(
+            onlyShowIcon: true,
+            showAppScaffold: false,
+          ),
+          autoCloseTime: timeout);
+    });
+  }
+  try {
+    await Future.doWhile(() async {
+      result = valueReturn();
+      if (result != null && result != false) {
+        if (showLoading) {
+          ShowOverScreen.remove();
+          if (timer != null) timer.cancel();
+        }
+        return false; // 条件满足，跳出循环
+      }
+      count++;
+      if (count > maxCount) {
+        return false;
+      }
+      // 每次循环间隔 50 毫秒
+      await Future.delayed(const Duration(milliseconds: 25));
+      return true;
+    }).timeout(Duration(seconds: timeout), onTimeout: () {
+      // 超时处理逻辑
+      if (showLoading) {
       ShowOverScreen.remove();
-      if (timer.isActive) timer.cancel();
-      return false; // 条件满足，跳出循环
+      if (timer != null) timer.cancel();
+      }
+      Logger.warn('请求超时', mark: 'awaitSuccess');
+      return result;
+    });
+  } catch (e) {
+    if (showLoading) {
+      ShowOverScreen.remove();
+      if (timer != null) timer.cancel();
     }
-    count++;
-    if (count > maxCount) {
-      return false;
-    }
-    // 每次循环间隔 50 毫秒
-    await Future.delayed(const Duration(milliseconds: 25));
-    return true;
-  });
+    Logger.error('error: $e', mark: 'awaitSuccess');
+    return result;
+  }
   return result;
 }
 
 /// 等待指定超时时间后显示加载动画
-Future<T> awaitTimeShowLoading<T>(
+Future<T?> awaitTimeShowLoading<T>(
   Future<T> Function() future, {
   BuildContext? context,
   int waitTime = 300, // 毫秒，超过指定时间显示加载动画
   int timeout = 30, // 秒，超时取消时间
 }) async {
-  final completer = Completer<T>();
+  final completer = Completer<T?>();
   late Timer timer;
   timer = Timer(Duration(milliseconds: waitTime), () {
     ShowOverScreen.show(
-        LoadingPage(
+        const LoadingPage(
           onlyShowIcon: true,
           showAppScaffold: false,
         ),
@@ -89,39 +112,51 @@ Future<T> awaitTimeShowLoading<T>(
     if (timer.isActive) timer.cancel();
   } on TimeoutException catch (_) {
     if (timer.isActive) timer.cancel();
-    showDebug('加载超时');
+    Logger.warn('加载超时', mark: 'awaitTimeShowLoading');
+    completer.complete();
   } on Exception catch (e, stackTrace) {
     ShowOverScreen.remove();
     if (timer.isActive) timer.cancel();
-    completer.completeError(e, stackTrace);
+    Logger.error('加载失败：$e\n$stackTrace', mark: 'awaitTimeShowLoading');
+    completer.complete();
   }
   return completer.future;
 }
 
-/// double 金额格式化
-String moneyFormat(double value) {
+/// 金额格式化为2位小数，解析int、double、String等类型，onlyOne=true只保留一位小数
+String moneyFormat(dynamic value, {bool onlyOne = false}) {
+  if (isEmptyOrNull(value)) {
+    value = 0;
+  } else if (value is String) {
+    value = double.parse(value);
+  } else if (value is int) {
+    value = value.toDouble();
+  } else {
+    value = 0;
+  }
+  if (onlyOne) {
+    NumberFormat format = NumberFormat("0.0");
+    return format.format(value);
+  }
   NumberFormat format = NumberFormat("0.00");
   return format.format(value);
 }
 
-/// 打印自设标识调试信息，通过自定义前缀快速检索输出数据
-void showDebug(dynamic value, {String? mark}) {
-  if (!kDebugMode) return; // 只在开发环境模式下打印信息
-  final effectiveMark = mark != null ? "-$mark:" : ":";
-  String jsonString;
+/// 将任何对象类型转为字符串
+String toStringWithAll(Object? object) {
+  String value = '';
   try {
-    // 如果 value 是一个 Map 或 List 类型的对象，则将其转换为 JSON 字符串。
-    if (value is Map || value is List) {
-      jsonString = jsonEncode(value);
+    if (object is String) {
+      value = object;
+    } else if (object is Map || object is List) {
+      value = jsonEncode(object);
     } else {
-      jsonString = value.toString();
+      value = object.toString();
     }
-  } on JsonUnsupportedObjectError catch (error) {
-    throw Exception(
-      '无法将对象 ${value.runtimeType} 转换为 JSON：${error.toString()}',
-    );
+  } catch (e) {
+    Logger.error('无法将对象 ${object.runtimeType} 转换：$e', mark: 'toStringWithAll');
   }
-  log("\n\n-----------  tishi$effectiveMark  ----------\n$jsonString\n---------------------------------------------\n");
+  return value;
 }
 
 /// 打开导航页面
@@ -129,7 +164,8 @@ toNav(
   T, {
   bool checkLogin = false,
   BuildContext? context,
-  bool removeAllRoute = false,
+  bool removeAllRoute = false, // 清除所有路由，用户不能后退
+  bool removeReplace = false, // 替换当前路由
 }) async {
   context ??= contextIndex;
 
@@ -138,6 +174,10 @@ toNav(
         MaterialPageRoute(builder: (build) {
       return T;
     }), (route) => false);
+  } else if (removeReplace) {
+    return await Navigator.of(context).pushReplacement(MaterialPageRoute(
+      builder: (context) => T,
+    ));
   } else {
     return await Navigator.of(context).push(MaterialPageRoute(builder: (build) {
       return T;
@@ -166,7 +206,7 @@ back<T extends Object?>({
 }
 
 ///获取用户保存的文件目录
-Future getPathUserFile() async {
+Future<String> getPathUserFile() async {
   var cachePath =
       Directory("${(await getApplicationDocumentsDirectory()).path}/file");
   if (!cachePath.existsSync()) {
@@ -176,7 +216,7 @@ Future getPathUserFile() async {
 }
 
 ///获取下载文件缓存目录
-Future getPathDownload() async {
+Future<String> getPathDownload() async {
   var cachePath =
       Directory("${(await getApplicationDocumentsDirectory()).path}/download");
   if (!cachePath.existsSync()) {
@@ -186,7 +226,7 @@ Future getPathDownload() async {
 }
 
 ///获取永久缓存目录，由app管理缓存
-Future getPathCache() async {
+Future<String> getPathCache() async {
   var cachePath =
       Directory("${(await getApplicationDocumentsDirectory()).path}/cache");
   if (!cachePath.existsSync()) {
@@ -196,7 +236,7 @@ Future getPathCache() async {
 }
 
 ///获取临时缓存总目录，会被系统自动清理
-Future getPathCacheTemp() async {
+Future<String> getPathCacheTemp() async {
   var cachePath = Directory("${(await getTemporaryDirectory()).path}/cache");
   if (!cachePath.existsSync()) {
     cachePath.create();

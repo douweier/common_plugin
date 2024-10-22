@@ -1,4 +1,5 @@
 
+import 'package:common_plugin/src/theme/theme.dart';
 import 'package:flutter/material.dart';
 
 
@@ -195,16 +196,16 @@ class _RefreState extends State<Refre> with TickerProviderStateMixin {
               ? SizeTransition(
                   sizeFactor: _sizeFactor,
                   child: Row(crossAxisAlignment: CrossAxisAlignment.center, mainAxisAlignment: MainAxisAlignment.center, children: [
-                    Text('正在努力加载', style: TextStyle(color: Color(0xffD7D7D7), fontSize: _scrollValue.abs() > 50 ? 14 : .3 * _scrollValue.abs())),
-                    SizedBox(width: 10),
-                    Image.asset('assets/images/load_animate.gif', height: _scrollValue.abs() > 50 ? 50 : _scrollValue.abs())
+                    TextView('正在加载', color: ColorTheme.fontLight, fontSize: _scrollValue.abs() > 40 ? 14 : .3 * _scrollValue.abs()),
+                    const SizedBox(width: 10),
+                    Image.asset('assets/images/load_animate.gif',package: "common_plugin", height: _scrollValue.abs() > 40 ? 40 : _scrollValue.abs())
                   ]))
               : SizeTransition(
                   sizeFactor: _keepSizeFactor,
                   child: Row(crossAxisAlignment: CrossAxisAlignment.center, mainAxisAlignment: MainAxisAlignment.center, children: [
-                    Text('正在努力加载', style: TextStyle(color: Color(0xffD7D7D7))),
-                    SizedBox(width: 10),
-                    Image.asset('assets/images/load_animate.gif', height: 50)
+                    TextView('正在加载',color: ColorTheme.fontLight),
+                    const SizedBox(width: 10),
+                    Image.asset('assets/images/load_animate.gif', height: 40,package: "common_plugin")
                   ])),
           _upOutside,
           _stopOutside,
