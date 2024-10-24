@@ -67,27 +67,63 @@ class _RadioViewState extends State<RadioView> {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: _toggleSelection,
-      child: Padding(
-        padding: widget.padding,
-        child: Row(
-          children: [
-            AnimateView(
-                controller: controller,
-                beginValue: 0.6,
-                endValue: 0,
-                duration: const Duration(milliseconds: 800),
-                builder: (value) {
-                  if (widget.isDotStyle) {
+      child: Opacity(
+        opacity: widget.readOnly ? 0.3 : 1,
+        child: Padding(
+          padding: widget.padding,
+          child: Row(
+            children: [
+              AnimateView(
+                  controller: controller,
+                  beginValue: 0.6,
+                  endValue: 0,
+                  duration: const Duration(milliseconds: 800),
+                  builder: (value) {
+                    if (widget.isDotStyle) {
+                      return Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: _isSelected
+                              ? [
+                                  BoxShadow(
+                                    color: widget.selectedColor ??
+                                        ColorTheme.main.withOpacity(value),
+                                    spreadRadius: 1,
+                                    blurRadius: 3,
+                                    offset: const Offset(0, 0),
+                                  ),
+                                ]
+                              : [],
+                        ),
+                        child: Center(
+                          child: _isSelected
+                              ? Icon(
+                                  Icons.radio_button_checked_rounded,
+                                  color: widget.unselectedColor ?? ColorTheme.main,
+                                  size: widget.size,
+                                )
+                              : Icon(
+                                  widget.unselectedIcon,
+                                  color: widget.unselectedColor ?? Colors.black26,
+                                  size: widget.size,
+                                ),
+                        ),
+                      );
+                     }
                     return Container(
+                      padding: _isSelected ? const EdgeInsets.all(3) : null,
                       decoration: BoxDecoration(
+                        color: _isSelected
+                            ? (widget.selectedColor ?? ColorTheme.main)
+                            : null,
                         shape: BoxShape.circle,
                         boxShadow: _isSelected
                             ? [
                                 BoxShadow(
                                   color: widget.selectedColor ??
                                       ColorTheme.main.withOpacity(value),
-                                  spreadRadius: 1,
-                                  blurRadius: 3,
+                                  spreadRadius: 3,
+                                  blurRadius: 2,
                                   offset: const Offset(0, 0),
                                 ),
                               ]
@@ -96,9 +132,9 @@ class _RadioViewState extends State<RadioView> {
                       child: Center(
                         child: _isSelected
                             ? Icon(
-                                Icons.radio_button_checked_rounded,
-                                color: widget.unselectedColor ?? ColorTheme.main,
-                                size: widget.size,
+                                widget.selectedIcon,
+                                color: Colors.white,
+                                size: widget.size * 0.7,
                               )
                             : Icon(
                                 widget.unselectedIcon,
@@ -107,49 +143,16 @@ class _RadioViewState extends State<RadioView> {
                               ),
                       ),
                     );
-                   }
-                  return Container(
-                    padding: _isSelected ? const EdgeInsets.all(3) : null,
-                    decoration: BoxDecoration(
-                      color: _isSelected
-                          ? (widget.selectedColor ?? ColorTheme.main)
-                          : null,
-                      shape: BoxShape.circle,
-                      boxShadow: _isSelected
-                          ? [
-                              BoxShadow(
-                                color: widget.selectedColor ??
-                                    ColorTheme.main.withOpacity(value),
-                                spreadRadius: 3,
-                                blurRadius: 2,
-                                offset: const Offset(0, 0),
-                              ),
-                            ]
-                          : [],
-                    ),
-                    child: Center(
-                      child: _isSelected
-                          ? Icon(
-                              widget.selectedIcon,
-                              color: Colors.white,
-                              size: widget.size * 0.7,
-                            )
-                          : Icon(
-                              widget.unselectedIcon,
-                              color: widget.unselectedColor ?? Colors.black26,
-                              size: widget.size,
-                            ),
-                    ),
-                  );
-                }),
-            if (widget.labelWidget != null)
-            widget.labelWidget!,
-            if (widget.label != null)
-            Padding(
-              padding: const EdgeInsets.only(left: 6),
-              child: TextView(widget.label!,color: ColorTheme.fontLight,),
-            ),
-          ],
+                  }),
+              if (widget.labelWidget != null)
+              widget.labelWidget!,
+              if (widget.label != null)
+              Padding(
+                padding: const EdgeInsets.only(left: 6),
+                child: TextView(widget.label!,color: ColorTheme.fontLight,),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -158,7 +161,7 @@ class _RadioViewState extends State<RadioView> {
   @override
   void didUpdateWidget(RadioView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.isSelected != _isSelected) {
+    if (widget.isSelected != _isSelected && !widget.readOnly) {
       _isSelected = widget.isSelected;
       if (_isSelected) {
         controller?.start();

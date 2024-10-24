@@ -6,6 +6,7 @@ import 'package:common_plugin/common_plugin.dart';
 import 'package:flutter/material.dart';
 import "package:intl/intl.dart";
 import 'package:path_provider/path_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 ///效验数据是否为空为零或为null
 bool isEmptyOrNull(dynamic value) {
@@ -131,7 +132,7 @@ String moneyFormat(dynamic value, {bool onlyOne = false}) {
     value = double.parse(value);
   } else if (value is int) {
     value = value.toDouble();
-  } else {
+  } else if (value is! double) {
     value = 0;
   }
   if (onlyOne) {
@@ -242,4 +243,14 @@ Future<String> getPathCacheTemp() async {
     cachePath.create();
   }
   return cachePath.path;
+}
+
+/// 打开app
+Future<bool> openApp(String url) async {
+  final Uri uri = Uri.parse(url);
+  if (await canLaunchUrl(uri)) {
+    await launchUrl(uri);
+    return true;
+  }
+  return false;
 }

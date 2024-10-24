@@ -11,6 +11,7 @@ class SwitchView extends StatefulWidget {
     this.inactiveTrackColor,
     this.activeThumbColor,
     this.value = false,
+    this.readonly = false,
     this.onChanged,
   });
 
@@ -20,6 +21,7 @@ class SwitchView extends StatefulWidget {
   final Color? inactiveTrackColor;
   final Color? activeThumbColor;
   final bool value;
+  final bool readonly;
   final ValueChanged<bool>? onChanged;
 
   @override
@@ -43,6 +45,10 @@ class _SwitchViewState extends State<SwitchView> with SingleTickerProviderStateM
     activeColor = widget.activeColor ?? ColorTheme.main;
     inactiveThumbColor = widget.inactiveThumbColor ?? ColorTheme.grey;
     inactiveTrackColor = widget.inactiveTrackColor ?? ColorTheme.grey;
+    if (widget.readonly) {
+      inactiveThumbColor = inactiveThumbColor.withOpacity(0.4);
+      inactiveTrackColor = inactiveTrackColor.withOpacity(0.4);
+    }
     activeThumbColor = widget.activeThumbColor ?? ColorTheme.main;
     _animationController = AnimationController(
       vsync: this,
@@ -124,6 +130,9 @@ class _SwitchViewState extends State<SwitchView> with SingleTickerProviderStateM
   }
 
   void _onTap() {
+    if (widget.readonly) {
+      return;
+    }
       _switchValue = !_switchValue;
       if (widget.onChanged != null) {
         widget.onChanged!(_switchValue);
@@ -146,7 +155,7 @@ class _SwitchViewState extends State<SwitchView> with SingleTickerProviderStateM
   @override
   void didUpdateWidget(SwitchView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.value != _switchValue) {
+    if (widget.value != _switchValue && !widget.readonly) {
       _switchValue = widget.value;
       if (_switchValue) {
         _animationController.forward(from: 1.0);

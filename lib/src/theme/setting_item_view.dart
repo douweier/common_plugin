@@ -12,6 +12,7 @@ class SettingItemView extends StatefulWidget {
     this.iconWidget,
     this.label = '',
     this.underText,
+    this.underWidget,
     this.fontColor,
     this.fontSize = 16.0,
     this.valueFontSize = 16.0,
@@ -48,6 +49,8 @@ class SettingItemView extends StatefulWidget {
 
   ///下面文字提示
   final String? underText;
+  ///自定义下边提示优先于文字提示
+  final Widget? underWidget;
 
   final Color? fontColor;
 
@@ -113,12 +116,14 @@ class SettingItemView extends StatefulWidget {
 class _SettingItemViewState extends State<SettingItemView> {
   bool switchValue = false;
   bool radioValue = false;
+  bool readOnly = false;
 
   @override
   void initState() {
     super.initState();
     switchValue = widget.switchValue ?? false;
     radioValue = widget.radioValue ?? false;
+    readOnly = widget.readOnly;
   }
 
   @override
@@ -132,13 +137,18 @@ class _SettingItemViewState extends State<SettingItemView> {
         radioValue = widget.radioValue ?? false;
       });
     }
+    if (widget.readOnly != oldWidget.readOnly) {
+      setState(() {
+        readOnly = widget.readOnly;
+      });
+    }
     super.didUpdateWidget(oldWidget);
   }
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: widget.radioShow
+      onTap: widget.readOnly ? null : (widget.radioShow
           ? (() {
               setState(() {
                 radioValue = !radioValue;
@@ -152,7 +162,7 @@ class _SettingItemViewState extends State<SettingItemView> {
                   });
                   widget.switchOnChanged?.call(switchValue);
                 })
-              : widget.onPressed),
+              : widget.onPressed)),
       child: Container(
         padding: widget.padding,
         margin: EdgeInsets.only(top: widget.top, bottom: widget.bottom),
@@ -219,15 +229,30 @@ class _SettingItemViewState extends State<SettingItemView> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
+                        Expanded(
+                            child: Align(
+                                alignment: Alignment.centerRight,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 5),
+                                  child: widget.valueWidget ??
+                                      TextView(
+                                        widget.value,
+                                        color: ColorTheme.grey,
+                                        fontSize: widget.valueFontSize,
+                                      ),
+                                ))),
                         if (widget.switchShow)
                           SwitchView(
                             value: switchValue,
                             activeColor: ColorTheme.main,
+                            readonly: readOnly,
                             onChanged: widget.switchOnChanged,
                           ),
                         if (widget.radioShow)
                           RadioView(
                             isSelected: radioValue,
+                            readOnly: readOnly,
                             onChanged: (value) {
                               setState(() {
                                 radioValue = value;
@@ -235,43 +260,23 @@ class _SettingItemViewState extends State<SettingItemView> {
                               widget.radioOnChanged?.call(radioValue);
                             },
                           ),
-                        if (!widget.switchShow && !widget.radioShow)
-                          Expanded(
-                            child: Row(
-                              children: [
-                                Expanded(
-                                    child: Align(
-                                        alignment: Alignment.centerRight,
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 5),
-                                          child: widget.valueWidget ??
-                                              TextView(
-                                                widget.value,
-                                                color: ColorTheme.grey,
-                                                fontSize: widget.valueFontSize,
-                                              ),
-                                        ))),
-                                if (!widget.readOnly)
-                                  const Padding(
-                                      padding: EdgeInsets.only(right: 8.0),
-                                      child: Icon(
-                                        Icons.arrow_forward_ios_rounded,
-                                        size: 18,
-                                        color: Colors.grey,
-                                      )),
-                              ],
-                            ),
-                          ),
+                        if (!widget.switchShow && !widget.radioShow && !widget.readOnly)
+                          const Padding(
+                                padding: EdgeInsets.only(right: 8.0),
+                                child: Icon(
+                                  Icons.arrow_forward_ios_rounded,
+                                  size: 18,
+                                  color: Colors.grey,
+                                )),
                       ],
                     ),
                   ),
                 ],
               ),
-              if (widget.underText != null)
+              if (widget.underText != null && widget.underWidget != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 5.0),
-                  child: TextView(
+                  child: widget.underWidget ?? TextView(
                     widget.underText!,
                     maxLines: widget.maxLines,
                     fontSize: 12,

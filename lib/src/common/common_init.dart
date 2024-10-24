@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:common_plugin/common_plugin.dart';
+import 'package:common_plugin/src/common/channel.dart';
 import 'package:flutter/material.dart';
 
 class CommonInit extends StatefulWidget {
@@ -12,11 +13,12 @@ class CommonInit extends StatefulWidget {
   /// 加载超时时间，单位秒
   final int loadingTimeout;
 
-  // 加载中页面
+  /// 加载中页面
   final Widget? loadingPage;
 
-  // 全局通用配置信息，对主题、字体、日志上报、卡片、按钮、输入、选项卡等各种样式及组件进行全局配置，避免每次使用组件都要挨个设置样式和方法配置。
+  /// 全局通用配置信息，对主题、字体、日志上报、卡片、按钮、输入、选项卡等各种样式及组件进行全局配置，避免每次使用组件都要挨个设置样式和方法配置。
   final CommonConfig? config;
+
 
   const CommonInit({
     super.key,
@@ -31,21 +33,33 @@ class CommonInit extends StatefulWidget {
   State<CommonInit> createState() => _CommonInitState();
 }
 
-class CommonConfig {}
+/// 全局通用配置
+class CommonConfig {
+
+   /// 其它app通过自定义common://方式打开，返回url回调
+   Function(String url)? onOpenUrl;
+
+   CommonConfig({
+    this.onOpenUrl,
+  });
+}
 
 class _CommonInitState extends State<CommonInit> with WidgetsBindingObserver {
   bool canPopExitApp = false; //是否可以返回退出app
 
   bool isBackend = false; //app为true时处于后端运行，false为活跃可见
 
-  ///加载的初始化是否完成
+  /// 加载的初始化是否完成
   bool loadingInitialized = false;
 
-  ///定时任务的初始化是否完成
+  /// 定时任务的初始化是否完成
   bool _crontabInitialized = false;
 
-  ///定时任务计时器
+  /// 定时任务计时器
   Timer? _crontabTimer;
+
+  /// 监听url
+  StreamSubscription<String>? _linkSubscription;
 
   @override
   void initState() {
@@ -57,6 +71,16 @@ class _CommonInitState extends State<CommonInit> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     isBackend = state.index == 0 ? false : true;
+    if (state.index == 0) { // 应用处于前台
+      _crontabTimer?.cancel();
+      _crontabTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
+        await crontabInit(context);
+      });
+      CommonChannel.initialize();
+    } else { // 应用处于后台
+      _crontabTimer?.cancel();
+      CommonChannel.close();
+    }
     super.didChangeAppLifecycleState(state);
   }
 
@@ -103,7 +127,20 @@ class _CommonInitState extends State<CommonInit> with WidgetsBindingObserver {
         widget.loading?.call().then((value) => res = value);
         await awaitWhileSuccess(() {
           return res;
-        }, timeout: widget.loadingTimeout,showLoading: false);
+        }, timeout: widget.loadingTimeout, showLoading: false);
+      }
+      if (widget.config?.onOpenUrl != null) {
+        CommonChannel.initialize();
+        CommonChannel.getInitialLink().then((link) {
+          // 获取应用启动时的初始链接
+          if (link != null) {
+            widget.config?.onOpenUrl?.call(link);
+          }
+        });
+        CommonChannel.onLinkStream.listen((event) {
+          // 应用运行时监听链接事件
+          widget.config?.onOpenUrl?.call(event);
+        });
       }
     } catch (e) {
       Logger.error("$e", mark: "loading-error");
@@ -126,10 +163,12 @@ class _CommonInitState extends State<CommonInit> with WidgetsBindingObserver {
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
     _crontabTimer?.cancel();
+    // 取消订阅链接流
+    _linkSubscription?.cancel();
     Sql.close();
     ShowOverScreen.remove();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 }

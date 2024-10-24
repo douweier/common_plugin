@@ -38,6 +38,7 @@ class InputView extends StatefulWidget {
     this.labelFontSize = 16.0,
     this.inputTips = '',
     this.showLengthTip = true, //是否显示输入长度提示
+    this.showClearIcon = true,
     this.placeHolder = '',
     this.onlyRead = false,
     this.rightUnit = '',
@@ -72,6 +73,7 @@ class InputView extends StatefulWidget {
   final String defaultValue;
   final String inputTips; //提示信息
   final bool showLengthTip; //是否显示输入长度提示
+  final bool showClearIcon; //是否显示清除按钮
   final bool onlyRead; //只读
   final String placeHolder; //占位符
   final double placeHolderFontSize;
@@ -183,7 +185,7 @@ class _InputViewState extends State<InputView> {
   @override
   void didUpdateWidget(InputView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!hasKeyboardInput && widget.defaultValue.isNotEmpty) {
+    if (!hasKeyboardInput && widget.defaultValue.isNotEmpty || widget.inputAllowType == InputAllowType.onlyInt) {
       // 输入事件后停止初始化赋值
       controller.text = widget.defaultValue;
     }
@@ -360,7 +362,7 @@ class _InputViewState extends State<InputView> {
                           },
                         ),
                       ),
-                      if (controller.text.isNotEmpty && !widget.onlyRead)
+                      if (widget.showClearIcon && controller.text.isNotEmpty && !widget.onlyRead)
                         InkWell(
                           onTap: () {
                             controller.clear();
@@ -380,7 +382,7 @@ class _InputViewState extends State<InputView> {
                                 size: 13,
                               )),
                         ),
-                      if (widget.maxLines <= 1 &&
+                      if (widget.showLengthTip && widget.maxLines <= 1 &&
                           widget.maxLength != null &&
                           controller.text.isNotEmpty)
                         Column(
